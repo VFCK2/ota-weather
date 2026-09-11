@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報6</title>
+<title>OTA WEATHER | 大田区独自予報7</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -67,9 +67,49 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 .status{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:700px){
  .app{padding:12px 10px 30px}.hero{grid-template-columns:1fr}.card{padding:14px;border-radius:17px}
- .place{font-size:22px}.temp{font-size:46px}.timeline{grid-template-columns:repeat(3,1fr)}.days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:8px;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.days .day{flex:0 0 112px;scroll-snap-align:start}
+ .place{font-size:23px}.temp{font-size:50px}.todayIcon{font-size:60px}.todaySummary{font-size:20px}.todayTemp b{font-size:31px}.todayTemp b:last-of-type{font-size:26px}
+ .timeline{grid-template-columns:repeat(3,1fr);gap:8px}.days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:9px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.days .day{flex:0 0 132px;scroll-snap-align:start}
+ .timebox{min-height:128px}.timebox .wx{font-size:28px}.timebox .p{font-size:22px}
  .engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
 }
+
+/* v1.3 視認性アップ */
+.todayCard{background:linear-gradient(145deg,#fff 0,#f7fbff 100%);border:1px solid #d8e8f7}
+.todayHead{display:flex;justify-content:space-between;align-items:flex-start}
+.todayLabel{font-size:22px;font-weight:900;margin-top:2px}
+.todayBadge{font-size:12px;font-weight:900;color:#4a6782;background:#fff;border:1px solid #dbe8f5;border-radius:999px;padding:6px 10px}
+.todayMain{display:flex;align-items:center;gap:16px;margin:14px 0 12px}
+.todayIcon{font-size:68px;line-height:1}
+.todaySummary{font-size:21px;font-weight:900;margin-bottom:8px}
+.todayTemp{display:flex;align-items:baseline;gap:7px;white-space:nowrap}
+.todayTemp b{font-size:34px;line-height:1}
+.todayTemp b:last-of-type{font-size:28px}
+.todayTemp span{font-size:12px;color:#607890;font-weight:800;margin-right:5px}
+.todayDetails{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.todayDetails div{background:#fff;border:1px solid #e0ebf5;border-radius:12px;padding:9px 11px}
+.todayDetails span{display:block;font-size:12px;color:#4b6680;font-weight:800}
+.todayDetails b{display:block;font-size:20px;margin-top:2px}
+.timebox{padding:10px 6px 11px;min-height:132px;display:flex;flex-direction:column;justify-content:center}
+.timebox .t{font-size:14px}
+.timebox .wx{font-size:30px;line-height:1;margin:5px 0}
+.timebox .p{font-size:24px;line-height:1.05}
+.timebox .r{font-size:12px;margin-top:4px}
+.day{padding:12px 6px 13px;min-height:148px}
+.day .d{font-size:15px}
+.day .ico{font-size:38px;margin:7px 0 4px}
+.day .daySummary{font-size:13px;font-weight:800;color:#526d87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .t{font-size:17px;margin-top:5px}
+.day .t b:first-child{font-size:20px}
+.day .t b:last-child{font-size:17px}
+.day .rain{font-size:13px;margin-top:5px}
+.sectionTitle h2{font-size:18px}
+.sectionTitle span{font-size:13px}
+.metric span,.detail span{font-size:13px}
+.metric b,.detail b{font-size:20px}
+.note{font-size:13px}
+.engines b{font-size:14px}.engine span{font-size:12px}
+.status{font-size:12px}
+
 </style>
 </head>
 <body>
@@ -88,23 +128,28 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       </div>
     </section>
 
-    <section class="card verdict" id="verdictCard">
-      <div class="vhead"><div class="vtitle">大田区 独自予報</div><div class="conf" id="confidence">判定中</div></div>
-      <div class="verdictMain">
-        <div class="score" id="scoreCircle" style="--score:0deg"><div><b id="score">--</b><small>/ 100</small></div></div>
-        <div><div class="judge" id="judge">判定中</div><div class="judgeSub" id="judgeSub">複数データを統合しています</div></div>
+    <section class="card todayCard">
+      <div class="todayHead"><div><div class="kicker">TODAY FORECAST</div><div class="todayLabel" id="todayLabel">今日</div></div><div class="todayBadge">大田区</div></div>
+      <div class="todayMain">
+        <div class="todayIcon" id="todayIcon">☀️</div>
+        <div><div class="todaySummary" id="todaySummary">取得中…</div><div class="todayTemp"><b id="todayMax">--</b><span>最高</span><b id="todayMin">--</b><span>最低</span></div></div>
       </div>
-      <div class="detailGrid">
-        <div class="detail"><span>雨の可能性</span><b id="rainRisk">--</b></div>
-        <div class="detail"><span>雨が始まる目安</span><b id="onset">--</b></div>
-        <div class="detail"><span>雨のピーク</span><b id="peak">--</b></div>
-        <div class="detail"><span>傘の判断</span><b id="umbrella">--</b></div>
+      <div class="todayDetails">
+        <div><span>降水確率</span><b id="todayRain">--</b></div>
+        <div><span>降水量</span><b id="todayPrecip">--</b></div>
       </div>
     </section>
   </div>
 
   <div class="sectionTitle"><h2>この先60分</h2><span>短時間の変化を重点表示</span></div>
   <section class="card"><div class="timeline" id="timeline"></div></section>
+
+  <div class="sectionTitle"><h2>大田区 独自予報</h2><span>実況・短時間予報・学習補正を統合</span></div>
+  <section class="card verdict" id="verdictCard">
+    <div class="vhead"><div class="vtitle">大田区 独自予報</div><div class="conf" id="confidence">判定中</div></div>
+    <div class="verdictMain"><div class="score" id="scoreCircle" style="--score:0deg"><div><b id="score">--</b><small>/ 100</small></div></div><div><div class="judge" id="judge">判定中</div><div class="judgeSub" id="judgeSub">複数データを統合しています</div></div></div>
+    <div class="detailGrid"><div class="detail"><span>雨の可能性</span><b id="rainRisk">--</b></div><div class="detail"><span>雨が始まる目安</span><b id="onset">--</b></div><div class="detail"><span>雨のピーク</span><b id="peak">--</b></div><div class="detail"><span>傘の判断</span><b id="umbrella">--</b></div></div>
+  </section>
 
   <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
   <section class="card"><div class="days" id="days"></div></section>
@@ -271,6 +316,14 @@ async function load(){
 
 function render(){
   const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
+  const today=d[0]||{};
+  $('todayLabel').textContent=today.time?'今日 · '+new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'今日';
+  $('todayIcon').textContent=wxIcon(today.weather_code);
+  $('todaySummary').textContent=wxText(today.weather_code);
+  $('todayMax').textContent=Math.round(today.temperature_2m_max??0)+'°';
+  $('todayMin').textContent=Math.round(today.temperature_2m_min??0)+'°';
+  $('todayRain').textContent=pct(today.precipitation_probability_max);
+  $('todayPrecip').textContent=Number(today.precipitation_sum??0).toFixed(1)+' mm';
   $('updated').textContent='更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
   $('temp').innerHTML=(c.temperature_2m??'--')+'<small>℃</small>';
   $('humidity').textContent=(c.relative_humidity_2m??'--')+'%';
@@ -293,8 +346,8 @@ function render(){
   $('peak').textContent=peakIdx<0?'--':timeHM(future[peakIdx]?.time);
   $('umbrella').textContent=risk>=60?'持っておくと安心':risk>=35?'念のため':'不要そう';
   $('confidence').textContent=forecast.source==='GAS独自予報'?'学習補正を適用':'直接取得';
-  $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="p">${pct(x.precipitation_probability)}</div><div class="r">${x.precipitation??0} mm</div></div>`).join('');
-  $('days').innerHTML=d.slice(0,7).map(x=>`<div class="day"><div class="d">${new Date(x.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(x.weather_code)}</div><div class="t">${Math.round(x.temperature_2m_max??0)}° / ${Math.round(x.temperature_2m_min??0)}°</div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`).join('');
+  $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="p">${pct(x.precipitation_probability)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
+  $('days').innerHTML=d.slice(0,7).map(x=>`<div class="day"><div class="d">${new Date(x.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`).join('');
   $('learning').textContent=forecast.learning_bias!=null?`学習補正 ${Number(forecast.learning_bias).toFixed(3)}`:'学習データを確認中';
 }
 
@@ -424,14 +477,7 @@ $('collect').onclick=async()=>{
     const scored = r && r.score ? Number(r.score.saved || 0) : 0;
     const obs = r && r.score ? Number(r.score.observations || 0) : 0;
     await load();
-    const c = r && r.collect ? r.collect : {};
-    if (c.skipped_api) {
-      $('status').textContent=`● 学習更新完了（採点 ${scored}件 / 実測 ${obs}件）・予報APIは前回データを使用`;
-    } else if (c.ok === false) {
-      $('status').textContent=`● 学習更新完了（採点 ${scored}件 / 実測 ${obs}件）・予報更新は一時失敗`;
-    } else {
-      $('status').textContent=`● 学習データ更新完了（採点 ${scored}件 / 実測 ${obs}件）`;
-    }
+    $('status').textContent=`● 学習データ更新完了（採点 ${scored}件 / 実測 ${obs}件）`;
 
   }catch(e){$('status').textContent='学習データ更新に失敗：'+(e.message||e)}
 };
