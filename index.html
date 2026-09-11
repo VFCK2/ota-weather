@@ -7,18 +7,18 @@
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#152033;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
 header{background:#0b1220;color:#fff;padding:16px}.sub{font-size:13px;opacity:.78}h1{font-size:21px;margin:0 0 3px}
 main{max-width:760px;margin:auto;padding:12px 10px 28px}.card{background:#fff;border-radius:18px;padding:14px;margin-bottom:11px;box-shadow:0 2px 12px #0000000b}
-.now{display:grid;grid-template-columns:1fr auto;align-items:center}.label{font-size:13px;color:#596577}.temp{font-size:44px;font-weight:800}.weather{font-size:18px;font-weight:650}.updated{font-size:12px;color:#718096}
-.score{font-size:36px;font-weight:800}.advice{font-size:14px;font-weight:700}h2{font-size:18px;margin:0 0 10px}
+.now{display:grid;grid-template-columns:1fr auto;align-items:center}.label{font-size:14px;font-weight:600;color:#596577} .temp{font-size:48px;font-weight:800}.weather{font-size:20px;font-weight:700}.updated{font-size:12px;color:#718096}
+.score{font-size:40px;font-weight:800}.advice{font-size:14px;font-weight:700}h2{font-size:20px;margin:0 0 10px}
 .map{height:390px;border-radius:14px;overflow:hidden;background:#dfe7ef}.mapbar,.controls{display:flex;gap:6px;align-items:center;margin-top:8px}
 button{border:0;border-radius:10px;padding:9px 10px;background:#0b1220;color:#fff;font-weight:700}.secondary{background:#eef2f6;color:#263447}
-.mapbar span,.controls span{font-size:13px;color:#566274}.mapbar span{margin-left:auto}.controls input{flex:1}
-.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:#4f5b6b}.legend i{width:10px;height:10px;display:inline-block;border-radius:3px}
+.mapbar span,.controls span{font-size:14px;color:#566274}.mapbar span{margin-left:auto}.controls input{flex:1}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#4f5b6b}.legend i{width:10px;height:10px;display:inline-block;border-radius:3px}
 .timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.slot{background:#f4f7fb;border-radius:11px;padding:8px 3px;text-align:center}
-.time{font-size:12px;color:#667085}.rain{font-size:19px;font-weight:800;margin:4px 0}.mm{font-size:11px;color:#667085}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:#f5f7fa;padding:10px;border-radius:11px}.metric b{display:block;font-size:20px;margin-top:3px}
-.note,.status{font-size:13px;color:#667085;line-height:1.6}.status{text-align:center;margin-top:6px}
+.time{font-size:15px;font-weight:650;color:#667085}.rain{font-size:22px;font-weight:800;margin:4px 0}.mm{font-size:13px;color:#667085}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:#f5f7fa;padding:13px;border-radius:11px}.metric b{display:block;font-size:23px;margin-top:3px}
+.note,.status{font-size:14px;color:#667085;line-height:1.6}.status{text-align:center;margin-top:6px}
 .arrival{background:#0f172a;color:#fff;text-align:center;padding:18px 14px}
-.arrivalLabel{font-size:14px;opacity:.82}.arrival #arrivalMain{font-size:30px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:12px;opacity:.72;line-height:1.5}
+.arrivalLabel{font-size:16px;opacity:.82}.arrival #arrivalMain{font-size:34px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:14px;opacity:.72;line-height:1.5}
 .leaflet-control-attribution{font-size:8px!important}
 @media(max-width:500px){.map{height:340px}.timeline{grid-template-columns:repeat(3,1fr)}}
 </style></head>
@@ -70,34 +70,33 @@ const rain=[51,53,55,61,63,65,80,81,82,95,96,99].includes(c.weather_code)?35:0;c
 }catch(e){console.error(e);}}
 
 function updateArrival(){
-  if(!frames.length)return;
-  // Use JMA frame times and a lightweight local check around the Ota reference point.
-  // The current tile is visual; exact pixel extraction from cross-origin tiles is not
-  // reliable in a static GitHub Pages app, so we combine near-term forecast probability
-  // with the first forecast radar frame as a conservative arrival estimate.
-  const now=Date.now();
-  let firstFuture=-1;
-  for(let i=0;i<frames.length;i++){
-    const s=frames[i].validtime;
-    const d=new Date(s.slice(0,4)+"-"+s.slice(4,6)+"-"+s.slice(6,8)+"T"+s.slice(8,10)+":"+s.slice(10,12)+":"+s.slice(12,14)+"Z");
-    if(d.getTime()>now){firstFuture=i;break}
-  }
   const main=document.getElementById("arrivalMain"),sub=document.getElementById("arrivalSub");
-  if(firstFuture<0){main.textContent="雨雲なし";sub.textContent="現在取得できる予測範囲では接近を確認できません";return;}
-  const mins=Math.max(5,Math.round((new Date(frames[firstFuture].validtime.slice(0,4)+"-"+frames[firstFuture].validtime.slice(4,6)+"-"+frames[firstFuture].validtime.slice(6,8)+"T"+frames[firstFuture].validtime.slice(8,10)+":"+frames[firstFuture].validtime.slice(10,12)+":"+frames[firstFuture].validtime.slice(12,14)+"Z").getTime()-now)/60000/5)*5);
-  const scoreText=document.getElementById("score").textContent;
-  const score=parseInt(scoreText)||0;
+  if(!main||!sub)return;
+  const score=parseInt(document.getElementById("score").textContent)||0;
+  if(!frames.length){
+    main.textContent="判定中…"; sub.textContent="雨雲データを取得しています"; return;
+  }
+  // The visual radar is authoritative for the map. The countdown is an estimate
+  // combining the next forecast frames with the short-range precipitation probability.
+  const now=Date.now();
+  const future=frames.map((f,i)=>{
+    const s=f.validtime;
+    const d=new Date(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T${s.slice(8,10)}:${s.slice(10,12)}:${s.slice(12,14)}Z`);
+    return {i,t:d.getTime()};
+  }).filter(x=>x.t>now).slice(0,12);
   if(score>=70){
-    main.textContent=`あと約${mins}分で雨の可能性`;
-    sub.textContent=`短時間予報の雨リスク ${score}%。レーダー予測を確認してください`;
+    const mins=Math.max(5,Math.min(60,Math.round((future[0]?.t-now||900000)/300000)*5));
+    main.textContent=`☔ あと約${mins}分`;
+    sub.textContent=`雨の可能性 ${score}%｜短時間予報をもとにした推定`;
   }else if(score>=35){
-    main.textContent=`雨雲接近の可能性あり`;
-    sub.textContent=`今後の雨リスク ${score}%。到達時刻を継続判定します`;
+    main.textContent="🌂 雨雲接近の可能性";
+    sub.textContent=`雨の可能性 ${score}%｜今後60分を監視中`;
   }else{
-    main.textContent="今のところ雨雲の影響は低め";
-    sub.textContent="5分ごとにレーダーを更新して再判定します";
+    main.textContent="☀️ 今のところ低リスク";
+    sub.textContent="雨雲レーダーと短時間予報を5分ごとに更新";
   }
 }
+
 const oldLoadRadar=loadRadar;
 loadRadar=async function(){await oldLoadRadar();updateArrival();}
 const oldLoadWeather=loadWeather;
