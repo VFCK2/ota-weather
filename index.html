@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報2.0</title>
+<title>OTA WEATHER | JMAナウキャスト1.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -475,13 +475,18 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 
 
+
+.nowcastGuide{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:#f5f9ff;border-top:1px solid #e6eef8;color:#35516f}
+.nowcastGuide div{display:flex;flex-direction:column;gap:3px;min-width:0}.nowcastGuide b{font-size:13px}.nowcastGuide span{font-size:11px;line-height:1.5}.nowcastGuide a{font-size:11px;font-weight:900;color:#1677d2;text-decoration:none;white-space:nowrap}
+@media(max-width:600px){.nowcastGuide{align-items:flex-start}.nowcastGuide a{font-size:10px}.mapTop span{font-size:9px}}
+
 .scoreWrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none}
 .scoreLabel{font-size:11px;font-weight:900;color:#46627f;white-space:nowrap}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header"><div class="brand"><b>OTA</b> WEATHER / INDEPENDENT FORECAST</div><div class="updated" id="updated">GAS接続中…</div></div>
+  <div class="header"><div class="brand"><b>OTA</b> WEATHER / JMA NOWCAST + FORECAST</div><div class="updated" id="updated">GAS接続中…</div></div>
 
   <div class="hero">
     <section class="card now">
@@ -508,22 +513,9 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     </section>
   </div>
 
-  <div class="sectionTitle"><h2>この先6時間</h2><span>短時間の変化を重点表示</span></div>
-  <section class="card"><div class="timeline" id="timeline"></div></section>
-
-  <div class="sectionTitle"><h2>大田区 独自予報</h2><span>実況・短時間予報・学習補正を統合</span></div>
-  <section class="card verdict" id="verdictCard">
-    <div class="vhead"><div class="vtitle">大田区 独自予報</div><div class="conf" id="confidence">判定中</div></div>
-    <div class="verdictMain"><div class="scoreWrap"><div class="score" id="scoreCircle" style="--score:0deg"><div><b id="score">--</b><small>/ 100</small></div></div><span class="scoreLabel">天気安定度</span></div><div><div class="judge" id="judge">判定中</div><div class="judgeSub" id="judgeSub">今後数時間の雨リスクから算出</div></div></div>
-    <div class="probNote">※降水確率は「その時間に雨が降る可能性」。天気アイコンは予想される天気の代表表示なので、雨アイコンでも降水確率が低い場合があります。</div><div class="detailGrid"><div class="detail"><span>雨の可能性</span><b id="rainRisk">--</b></div><div class="detail"><span>雨が始まる目安</span><b id="onset">--</b></div><div class="detail"><span>雨のピーク</span><b id="peak">--</b></div><div class="detail"><span>傘の判断</span><b id="umbrella">--</b></div></div>
-  </section>
-
-  <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
-  <section class="card"><div class="days" id="days"></div></section>
-
-  <div class="sectionTitle"><h2>雨雲の動き</h2><span>地図はドラッグできます</span></div>
+  <div class="sectionTitle"><h2>今から60分</h2><span>気象庁・高解像度降水ナウキャスト</span></div>
   <section class="card mapCard">
-    <div class="mapTop"><b>大田区周辺レーダー</b><span>気象庁 高解像度降水ナウキャスト</span></div>
+    <div class="mapTop"><b>大田区周辺の雨雲</b><span>5分ごと更新 / 30分先まで250m・35〜60分先1km</span></div>
     <div id="map"></div>
     <div class="mapControls">
       <button id="play">▶ 再生</button>
@@ -531,13 +523,20 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <input id="slider" type="range" min="0" max="0" value="0">
       <div class="mapTime" id="mapTime">--:--</div>
     </div>
-    <div class="note">地図のスクロール操作を邪魔しないよう、ページ側のスクロールと地図操作を分離しています。地図内ではドラッグ・ズームが可能です。</div>
+    <div class="nowcastGuide">
+      <div><b>短時間予報の本体</b><span>今の雨雲と、これから60分の動きを気象庁ナウキャストで確認します。</span></div>
+      <a href="https://www.jma.go.jp/bosai/nowc/" target="_blank" rel="noopener">気象庁で詳しく見る ↗</a>
+    </div>
   </section>
 
-  <section class="card">
-    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center"><button class="primary" id="collect">学習データ更新</button></div></div>
-    <div class="status" id="status"></div>
-  </section>
+  <div class="sectionTitle"><h2>この先6時間</h2><span>時間ごとの見通し</span></div>
+  <section class="card"><div class="timeline" id="timeline"></div></section>
+
+  <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
+  <section class="card"><div class="days" id="days"></div></section>
+
+  <div class="status" id="status"></div>
+
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -556,7 +555,7 @@ function normalizeGAS(d){
   if(d.ok===false) throw new Error(d.error||'GAS APIエラー');
   const hourly=(d.hourly||[]).map(x=>({
     time:x.time||x.target_time,
-    precipitation_probability:Number(x.precipitation_probability ?? (x.learned_probability!=null?Number(x.learned_probability)*100:null) ?? x.rain_probability ?? 0),
+    precipitation_probability:Number(x.precipitation_probability ?? x.rain_probability ?? 0),
     precipitation:Number(x.precipitation ?? x.precipitation_mm ?? 0),
     temperature_2m:Number(x.temperature_2m ?? x.temperature_c ?? 0),
     relative_humidity_2m:Number(x.relative_humidity_2m ?? x.humidity_pct ?? 0),
@@ -573,7 +572,7 @@ function normalizeGAS(d){
     wind_speed_10m_max:Number(x.wind_speed_10m_max ?? x.wind_kmh ?? 0)
   }));
   const c=d.current||{};
-  return {current:c,hourly,daily,learning_bias:Number(d.learning_bias??0),source:'GAS独自予報',generated_at:d.generated_at||''};
+  return {current:c,hourly,daily,generated_at:d.generated_at||''};
 }
 
 // GAS通信は、Apps Script公式のJSONP方式を使用。
@@ -663,7 +662,7 @@ async function load(){
   try{
     forecast=await getGASForecast();
     render();
-    $('status').textContent='● GAS接続成功 / GAS_LEARNED / 最新データを表示中';
+    $('status').textContent='● 接続成功 / JMAナウキャスト＋時間予報を表示中';
   }catch(e){
     console.error('GAS取得失敗',e);
     $('status').textContent='GAS接続失敗：'+(e.message||e);
@@ -691,23 +690,9 @@ function render(){
   $('summary').textContent=wxText(c.weather_code);
 
   const future=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,6);
-  const probs=future.map(x=>Number(x.precipitation_probability||0));
-  const risk=probs.length?Math.max(...probs):0;
-  const first=probs.findIndex(x=>x>=40);
-  const peakIdx=probs.length?probs.indexOf(Math.max(...probs)): -1;
-  /* 天気安定度：今後数時間の最大降水確率を100から引いた目安。予報の正解率ではない。 */
-  let score=Math.max(0,100-risk); if(risk>=70)score-=10; else if(risk>=50)score-=5; score=Math.max(0,Math.round(score));
-  $('score').textContent=score; $('scoreCircle').style.setProperty('--score',(score*3.6)+'deg');
-  $('judge').textContent=score>=82?'かなり安定':score>=65?'大きな崩れはなし':score>=45?'変化に注意':'雨への警戒';
-  $('judgeSub').textContent=risk>=60?'今後数時間は雨への注意が必要です':`今後数時間の最大降水確率は${Math.round(risk)}%です`;
-  $('rainRisk').textContent=pct(risk);
-  $('onset').textContent=first<0?'今のところなし':timeHM(future[first]?.time);
-  $('peak').textContent=peakIdx<0?'--':timeHM(future[peakIdx]?.time);
-  $('umbrella').textContent=risk>=60?'持っておくと安心':risk>=35?'念のため':'不要そう';
-  $('confidence').textContent=forecast.source==='GAS独自予報'?'学習補正を適用':'直接取得';
-  $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="p">${pct(x.precipitation_probability)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
+  $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
   $('days').innerHTML=d.slice(0,7).map(x=>`<div class="day"><div class="d">${new Date(x.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`).join('');
-  $('learning').textContent=forecast.learning_bias!=null?`学習補正 ${Number(forecast.learning_bias).toFixed(3)}（予報を微調整）`:'学習データを確認中';
+
 }
 
 async function setupMap(){
@@ -715,6 +700,8 @@ async function setupMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
   L.marker([LAT,LON]).addTo(map).bindPopup('大田区').openPopup();
   await loadFrames();
+  // JMAナウキャストは5分更新なので、画面を開いている間も追従する。
+  setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
 }
 async function loadFrames(){
   try{
@@ -818,37 +805,5 @@ function showFrame(i){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
-$('collect').onclick=async()=>{
-  if(gasBusy){$('status').textContent='GAS通信中です…';return}
-  $('status').textContent='学習データ更新中…';
-  try{
-    const r=await getGAS('collect');
-    if(r&&r.ok===false)throw new Error(r.error||'GAS APIエラー');
-    const scored = r && r.score ? Number(r.score.saved || 0) : 0;
-    const obs = r && r.score ? Number(r.score.observations || 0) : 0;
-    const candidates = r && r.score ? Number(r.score.candidates || 0) : 0;
-    const recentObs = r && r.score ? Number(r.score.recent_observations || 0) : 0;
-    await load();
-    let totalSamples = 0;
-    try {
-      const learningData = await getGAS('learning', 8000);
-      const rows = learningData && Array.isArray(learningData.rows) ? learningData.rows : [];
-      totalSamples = rows.reduce((sum, row) => sum + Number(row.samples || 0), 0);
-    } catch (ignore) {}
-    const c = r && r.collect ? r.collect : {};
-    const baseStatus = `今回 ${scored}件採点 / 新規実測 ${obs}件 / 対象 ${candidates}件`;
-    const totalStatus = `累計学習 ${totalSamples}件`;
-    if (c.skipped_api) {
-      $('status').textContent=`● 学習更新完了（${baseStatus} / ${totalStatus}）・予報APIは前回データを使用`;
-    } else if (c.ok === false) {
-      $('status').textContent=`● 学習更新完了（${baseStatus} / ${totalStatus}）・予報更新は一時失敗`;
-    } else {
-      $('status').textContent=`● 学習データ更新完了（${baseStatus} / ${totalStatus}）`;
-    }
 
-  }catch(e){$('status').textContent='学習データ更新に失敗：'+(e.message||e)}
-};
-setupMap();load();
-</script>
-</body>
-</html>
+// 学習処理はGAS側で継続。画面上の独自補正は一旦使用しません。
