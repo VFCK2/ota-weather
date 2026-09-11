@@ -67,7 +67,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 .status{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:700px){
  .app{padding:12px 10px 30px}.hero{grid-template-columns:1fr}.card{padding:14px;border-radius:17px}
- .place{font-size:22px}.temp{font-size:46px}.timeline{grid-template-columns:repeat(3,1fr)}.days{grid-template-columns:repeat(4,1fr)}
+ .place{font-size:22px}.temp{font-size:46px}.timeline{grid-template-columns:repeat(3,1fr)}.days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:8px;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.days .day{flex:0 0 112px;scroll-snap-align:start}
  .engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
 }
 </style>
@@ -255,20 +255,95 @@ async function loadFrames(){
     const past=await r1.json();
     const future=await r2.json();
     const now=Date.now();
-    const pastFrames=past.filter(x=>Date.parse(x.validtime.slice(0,4)+'-'+x.validtime.slice(4,6)+'-'+x.validtime.slice(6,8)+'T'+x.validtime.slice(8,10)+':'+x.validtime.slice(10,12)+':00+09:00')<=now).slice(0,6);
-    const futureFrames=future.slice().sort((a,b)=>String(a.validtime).localeCompare(String(b.validtime))).filter(x=>x.validtime).slice(0,13);
-    const all=[...pastFrames,...futureFrames].sort((a,b)=>String(a.validtime).localeCompare(String(b.validtime)));
-    const seen=new Set(); frames=all.filter(x=>{const k=x.basetime+'_'+x.validtime;if(seen.has(k))return false;seen.add(k);return true});
+
+    // N1は実況解析。JMAの配列は新しい順なので、そのまま先頭側を使う。
+    const pastFrames=past
+      .filter(x=>x && x.basetime && x.validtime)
+      .slice(0,12)
+      .map(x=>({...x,type:'実況'}));
+
+    // N2は1時間先まで5分刻み。validtimeで昇順にする。
+    const futureFrames=future
+      .filter(x=>x && x.basetime && x.validtime)
+      .sort((a,b)=>String(a.validtime).localeCompare(String(b.validtime)))
+      .map(x=>({...x,type:'予測'}));
+
+    // 実況→予測を連結。重複時刻は除外。
+    const all=[...pastFrames,...futureFrames];
+    const seen=new Set();
+    frames=all.filter(x=>{
+      const k=String(x.basetime)+'_'+String(x.validtime);
+      if(seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
     $('slider').max=Math.max(0,frames.length-1);
-    let initial=0, best=Infinity;
-    frames.forEach((f,i)=>{const t=jmaDate(f.validtime)?.getTime()??0;const diff=Math.abs(t-now);if(diff<best){best=diff;initial=i}});
+
+    // 初期表示は「現在に最も近い実況」を優先。
+    let initial=0;
+    if(pastFrames.length){
+      let best=Infinity;
+      pastFrames.forEach((f,i)=>{
+        const t=jmaDate(f.validtime)?.getTime()??0;
+        const diff=Math.abs(t-now);
+        if(diff<best){best=diff;initial=i}
+      });
+    }
+
     $('slider').value=initial;
     showFrame(initial);
-  }catch(e){console.error(e);$('mapTime').textContent='雨雲データ取得不可'}
+    $('mapTime').textContent=jmaTimeHM(frames[initial]?.validtime)+'　実況';
+  }catch(e){
+    console.error('JMA radar error',e);
+    $('mapTime').textContent='雨雲データ取得失敗';
+  }
 }
-function jmaDate(v){try{const s=String(v||'');if(s.length<12)return null;return new Date(Date.UTC(Number(s.slice(0,4)),Number(s.slice(4,6))-1,Number(s.slice(6,8)),Number(s.slice(8,10)),Number(s.slice(10,12)),0))}catch(e){return null}}
-function jmaTimeHM(v){const d=jmaDate(v);return d?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):'--:--'}
-function showFrame(i){if(!frames[i])return;const f=frames[i];const url=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;if(rainLayer)map.removeLayer(rainLayer);rainLayer=L.tileLayer(url,{opacity:.78,tileSize:256,minZoom:3,maxZoom:10,maxNativeZoom:10,zIndex:500,attribution:'気象データ © Japan Meteorological Agency'}).addTo(map);$('mapTime').textContent=jmaTimeHM(f.validtime)}
+function jmaDate(v){
+  try{
+    const s=String(v||'');
+    if(s.length<12)return null;
+    // JMA timestampはUTCのYYYYMMDDhhmmss
+    return new Date(Date.UTC(
+      Number(s.slice(0,4)),
+      Number(s.slice(4,6))-1,
+      Number(s.slice(6,8)),
+      Number(s.slice(8,10)),
+      Number(s.slice(10,12)),
+      0
+    ));
+  }catch(e){return null}
+}
+function jmaTimeHM(v){
+  const d=jmaDate(v);
+  return d?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):'--:--';
+}
+function showFrame(i){
+  if(!frames[i])return;
+  const f=frames[i];
+  const url=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;
+
+  if(rainLayer)map.removeLayer(rainLayer);
+
+  rainLayer=L.tileLayer(url,{
+    opacity:.82,
+    tileSize:256,
+    minZoom:4,
+    maxZoom:18,
+    maxNativeZoom:10,
+    zIndex:500,
+    crossOrigin:true,
+    attribution:'気象データ © Japan Meteorological Agency'
+  }).addTo(map);
+
+  rainLayer.once('load',()=>{
+    $('mapTime').textContent=jmaTimeHM(f.validtime)+'　'+(f.type||'実況');
+  });
+  rainLayer.once('tileerror',()=>{
+    $('mapTime').textContent=jmaTimeHM(f.validtime)+'　雨雲タイル取得エラー';
+  });
+  $('mapTime').textContent=jmaTimeHM(f.validtime)+'　'+(f.type||'実況');
+}
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
