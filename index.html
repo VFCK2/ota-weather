@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>大田区 超局地天気</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#152033;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+header{background:#0b1220;color:white;padding:18px 16px calc(18px + env(safe-area-inset-top));position:sticky;top:0;z-index:5}
+h1{font-size:22px;margin:0 0 4px}.sub{font-size:12px;opacity:.7}
+main{max-width:720px;margin:auto;padding:14px 12px 30px}
+.card{background:white;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px #0000000b}
+.now{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.temp{font-size:46px;font-weight:700;line-height:1}.weather{font-size:16px;margin-top:6px}.updated{font-size:11px;color:#718096;margin-top:8px}
+.score{font-size:34px;font-weight:800}.label{font-size:12px;color:#687385}.advice{font-weight:700;margin-top:4px}
+h2{font-size:16px;margin:0 0 12px}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.slot{background:#f4f7fb;border-radius:12px;padding:9px 4px;text-align:center}.time{font-size:11px;color:#667085}.rain{font-size:18px;font-weight:800;margin:5px 0}.mm{font-size:10px;color:#667085}
+.bar{height:8px;border-radius:99px;background:#e8edf3;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:#377dff;border-radius:99px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#f5f7fa;padding:12px;border-radius:12px}.metric b{display:block;font-size:18px;margin-top:3px}
+.note{font-size:11px;color:#667085;line-height:1.6}
+button{width:100%;border:0;border-radius:12px;padding:13px;background:#0b1220;color:white;font-weight:700;font-size:15px}
+.status{font-size:12px;color:#667085;margin-top:8px;text-align:center}
+@media(max-width:420px){.timeline{grid-template-columns:repeat(3,1fr)}}
+
+.mapwrap{border-radius:14px;overflow:hidden;background:#e9eef5}.mapwrap iframe{width:100%;height:360px;border:0;display:block}.mapnote{padding:9px 10px;font-size:10px;line-height:1.5;color:#667085;background:#f7f9fb}
+.logic{display:grid;gap:8px}.logic div{display:flex;align-items:center;gap:10px;background:#f5f7fa;border-radius:12px;padding:11px}.logic b{min-width:55px}.logic span{font-size:12px;color:#667085}
+@media(max-width:500px){.mapwrap iframe{height:330px}}
+</style>
+</head>
+<body>
+<header><h1>🌧 大田区 超局地天気</h1><div class="sub">雨雲の動き＋独自雨判定　v0.2</div></header>
+<main>
+<section class="card now">
+  <div><div class="label">大田区・現在</div><div id="temp" class="temp">--°</div><div id="weather" class="weather">読み込み中…</div><div id="updated" class="updated"></div></div>
+  <div style="text-align:right"><div class="label">独自雨判定</div><div id="score" class="score">--%</div><div id="advice" class="advice">判定中</div></div>
+</section>
+
+<section class="card"><h2>🗺 大田区・雨雲レーダー</h2>
+<div class="mapwrap">
+  <iframe title="気象庁 雨雲の動き" src="https://www.jma.go.jp/bosai/nowc/" loading="lazy"></iframe>
+  <div class="mapnote">気象庁「雨雲の動き」を表示。高解像度降水ナウキャストは5分ごとに更新され、30分先まで250m格子、その後1時間先まで1km格子です。citeturn0search0turn0search18</div>
+</div></section>
+<section class="card"><h2>☔ 大田区の雨予測</h2><div id="timeline" class="timeline"></div></section>
+
+<section class="card"><h2>📊 現在の観測</h2><div class="metrics">
+<div class="metric"><span class="label">湿度</span><b id="humidity">--%</b></div>
+<div class="metric"><span class="label">風</span><b id="wind">-- m/s</b></div>
+<div class="metric"><span class="label">降水</span><b id="precip">-- mm</b></div>
+</div></section>
+
+<section class="card"><h2>🧠 独自雨判定</h2>
+<div class="logic"><div><b>短時間</b><span>レーダー・ナウキャストを重視</span></div><div><b>数時間</b><span>降水短時間予報・数値予報を重視</span></div><div><b>学習</b><span>予報と実測のズレを蓄積</span></div></div>
+</section>
+<section class="card"><h2>🧠 このアプリの考え方</h2>
+<p class="note">気象庁の予報だけを表示するのではなく、複数データを比較し、実測とのズレを記録して大田区向けの補正モデルを育てます。現在はv0.2の試作版です。次段階では気象庁データを取得・保存し、実測との誤差を使った大田区専用補正へ進めます。</p>
+<button onclick="loadData()">↻ 最新データに更新</button>
+<div id="status" class="status"></div>
+</section>
+
+<section class="card"><h2>📚 データソース</h2>
+<p class="note">現在の試作版はOpen-Meteoの高頻度予報を表示し、後段で気象庁の高解像度降水ナウキャスト・観測データとの比較層を追加する構成です。</p>
+</section>
+</main>
+<script>
+const LAT=35.5613, LON=139.7161;
+const WMO={0:"快晴",1:"晴れ",2:"薄曇り",3:"曇り",45:"霧",48:"霧",51:"弱い霧雨",53:"霧雨",55:"霧雨",61:"弱い雨",63:"雨",65:"強い雨",71:"弱い雪",73:"雪",75:"強い雪",80:"にわか雨",81:"にわか雨",82:"強いにわか雨",95:"雷雨",96:"雷雨",99:"強い雷雨"};
+function pct(x){return Math.max(0,Math.min(100,Math.round(x||0)))}
+async function loadData(){
+ const status=document.getElementById("status"); status.textContent="データ取得中…";
+ try{
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&minutely_15=precipitation&hourly=precipitation_probability,precipitation,weather_code&forecast_days=2&timezone=Asia%2FTokyo`;
+  const d=await fetch(url).then(r=>r.json());
+  const c=d.current;
+  document.getElementById("temp").textContent=Math.round(c.temperature_2m)+"°";
+  document.getElementById("weather").textContent=WMO[c.weather_code]||"天気";
+  document.getElementById("humidity").textContent=Math.round(c.relative_humidity_2m)+"%";
+  document.getElementById("wind").textContent=(c.wind_speed_10m/3.6).toFixed(1)+" m/s";
+  document.getElementById("precip").textContent=(c.precipitation||0).toFixed(1)+" mm";
+  document.getElementById("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+  const h=d.hourly;
+  const now=new Date();
+  let idx=h.time.findIndex(t=>new Date(t)>=new Date(now.getTime()-30*60000));
+  if(idx<0) idx=0;
+  let html="";
+  let maxP=0;
+  for(let i=idx;i<idx+6 && i<h.time.length;i++){
+    const p=h.precipitation_probability[i]||0, mm=h.precipitation[i]||0; maxP=Math.max(maxP,p);
+    const dt=new Date(h.time[i]);
+    html+=`<div class="slot"><div class="time">${dt.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</div><div class="rain">${p}%</div><div class="mm">${mm.toFixed(1)}mm</div><div class="bar"><i style="width:${p}%"></i></div></div>`;
+  }
+  document.getElementById("timeline").innerHTML=html;
+  // v0.1: short-range rain score. Later replace with calibrated multi-source model.
+  const currentRain=(c.precipitation||0)>0 ? 45 : 0;
+  const codeRain=[51,53,55,61,63,65,80,81,82,95,96,99].includes(c.weather_code)?35:0;
+  const score=pct(Math.max(maxP,currentRain+codeRain));
+  document.getElementById("score").textContent=score+"%";
+  document.getElementById("advice").textContent=score>=70?"☔ 傘がおすすめ":score>=35?"🌂 折りたたみ傘を検討":"☀️ 今は雨リスク低め";
+  status.textContent="取得完了";
+ }catch(e){status.textContent="取得できませんでした。通信状態を確認してください。";console.error(e)}
+}
+loadData();
+</script>
+</body></html>
