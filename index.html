@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報1.5</title>
+<title>OTA WEATHER | 大田区独自予報1.6</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -41,6 +41,7 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 .score:before{content:"";position:absolute;inset:8px;background:#f4faff;border-radius:50%}
 .score b{position:relative;font-size:27px}.score small{position:relative;display:block;font-size:10px;color:var(--muted);text-align:center}
 .judge{font-size:24px;font-weight:900;line-height:1.15}.judgeSub{color:#46627f;font-size:13px;margin-top:5px;font-weight:600}
+.probNote{font-size:11px;line-height:1.55;color:#5b7188;margin:0 0 10px;padding:8px 10px;background:#f6f9fc;border-radius:10px}
 .detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .detail{background:#fff;border:1px solid #e1edf8;border-radius:12px;padding:9px 10px}
 .detail span{display:block;font-size:12px;color:#4b6680;font-weight:700}.detail b{font-size:15px}
@@ -473,6 +474,9 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   }
 }
 
+
+.scoreWrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none}
+.scoreLabel{font-size:11px;font-weight:900;color:#46627f;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -510,8 +514,8 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   <div class="sectionTitle"><h2>大田区 独自予報</h2><span>実況・短時間予報・学習補正を統合</span></div>
   <section class="card verdict" id="verdictCard">
     <div class="vhead"><div class="vtitle">大田区 独自予報</div><div class="conf" id="confidence">判定中</div></div>
-    <div class="verdictMain"><div class="score" id="scoreCircle" style="--score:0deg"><div><b id="score">--</b><small>/ 100</small></div></div><div><div class="judge" id="judge">判定中</div><div class="judgeSub" id="judgeSub">複数データを統合しています</div></div></div>
-    <div class="detailGrid"><div class="detail"><span>雨の可能性</span><b id="rainRisk">--</b></div><div class="detail"><span>雨が始まる目安</span><b id="onset">--</b></div><div class="detail"><span>雨のピーク</span><b id="peak">--</b></div><div class="detail"><span>傘の判断</span><b id="umbrella">--</b></div></div>
+    <div class="verdictMain"><div class="scoreWrap"><div class="score" id="scoreCircle" style="--score:0deg"><div><b id="score">--</b><small>/ 100</small></div></div><span class="scoreLabel">天気安定度</span></div><div><div class="judge" id="judge">判定中</div><div class="judgeSub" id="judgeSub">今後数時間の雨リスクから算出</div></div></div>
+    <div class="probNote">※降水確率は「その時間に雨が降る可能性」。天気アイコンは予想される天気の代表表示なので、雨アイコンでも降水確率が低い場合があります。</div><div class="detailGrid"><div class="detail"><span>雨の可能性</span><b id="rainRisk">--</b></div><div class="detail"><span>雨が始まる目安</span><b id="onset">--</b></div><div class="detail"><span>雨のピーク</span><b id="peak">--</b></div><div class="detail"><span>傘の判断</span><b id="umbrella">--</b></div></div>
   </section>
 
   <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
@@ -530,8 +534,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     <div class="note">地図のスクロール操作を邪魔しないよう、ページ側のスクロールと地図操作を分離しています。地図内ではドラッグ・ズームが可能です。</div>
   </section>
 
-  <div class="sectionTitle"><h2>予報エンジン</h2><span>最下部に集約</span></div>
-  <section class="card">
+    <section class="card">
     <div class="engines">
       <div class="engine"><b>01 / NOW</b><span>実況・短時間降水を最優先。直近の雨変化を判定。</span></div>
       <div class="engine"><b>02 / SHORT</b><span>時間別予報と学習補正を統合。数時間先を判定。</span></div>
@@ -540,7 +543,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   </section>
 
   <section class="card">
-    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center"><button id="gasTest" style="border:1px solid #c9d8e8;background:#fff;color:#17446f;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
+    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center"><button class="primary" id="collect">学習データ更新</button></div></div>
     <div class="status" id="status"></div>
   </section>
 </div>
@@ -700,10 +703,11 @@ function render(){
   const risk=probs.length?Math.max(...probs):0;
   const first=probs.findIndex(x=>x>=40);
   const peakIdx=probs.length?probs.indexOf(Math.max(...probs)): -1;
+  /* 天気安定度：今後数時間の最大降水確率を100から引いた目安。予報の正解率ではない。 */
   let score=Math.max(0,100-risk); if(risk>=70)score-=10; else if(risk>=50)score-=5; score=Math.max(0,Math.round(score));
   $('score').textContent=score; $('scoreCircle').style.setProperty('--score',(score*3.6)+'deg');
   $('judge').textContent=score>=82?'かなり安定':score>=65?'大きな崩れはなし':score>=45?'変化に注意':'雨への警戒';
-  $('judgeSub').textContent=risk>=60?'短時間に雨へ変化する可能性があります':'現時点では急な雨の可能性は低めです';
+  $('judgeSub').textContent=risk>=60?'今後数時間は雨への注意が必要です':`今後数時間の最大降水確率は${Math.round(risk)}%です`;
   $('rainRisk').textContent=pct(risk);
   $('onset').textContent=first<0?'今のところなし':timeHM(future[first]?.time);
   $('peak').textContent=peakIdx<0?'--':timeHM(future[peakIdx]?.time);
@@ -711,7 +715,7 @@ function render(){
   $('confidence').textContent=forecast.source==='GAS独自予報'?'学習補正を適用':'直接取得';
   $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="p">${pct(x.precipitation_probability)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
   $('days').innerHTML=d.slice(0,7).map(x=>`<div class="day"><div class="d">${new Date(x.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`).join('');
-  $('learning').textContent=forecast.learning_bias!=null?`学習補正 ${Number(forecast.learning_bias).toFixed(3)}`:'学習データを確認中';
+  $('learning').textContent=forecast.learning_bias!=null?`学習補正 ${Number(forecast.learning_bias).toFixed(3)}（予報を微調整）`:'学習データを確認中';
 }
 
 async function setupMap(){
@@ -822,15 +826,6 @@ function showFrame(i){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
-$('gasTest').onclick=async()=>{
-  if(gasBusy){$('status').textContent='GAS通信中です…';return}
-  $('status').textContent='GAS接続テスト中…';
-  try{
-    const d=await getGAS('ping',8000);
-    if(!d || d.pong!==true) throw new Error('GAS pingの応答が不正です');
-    $('status').textContent='● GAS接続OK / ping受信 / '+timeHM(d.at);
-  }catch(e){$('status').textContent='GAS接続テスト失敗：'+(e.message||e)}
-};
 $('collect').onclick=async()=>{
   if(gasBusy){$('status').textContent='GAS通信中です…';return}
   $('status').textContent='学習データ更新中…';
@@ -842,13 +837,21 @@ $('collect').onclick=async()=>{
     const candidates = r && r.score ? Number(r.score.candidates || 0) : 0;
     const recentObs = r && r.score ? Number(r.score.recent_observations || 0) : 0;
     await load();
+    let totalSamples = 0;
+    try {
+      const learningData = await getGAS('learning', 8000);
+      const rows = learningData && Array.isArray(learningData.rows) ? learningData.rows : [];
+      totalSamples = rows.reduce((sum, row) => sum + Number(row.samples || 0), 0);
+    } catch (ignore) {}
     const c = r && r.collect ? r.collect : {};
+    const baseStatus = `今回 ${scored}件採点 / 新規実測 ${obs}件 / 対象 ${candidates}件`;
+    const totalStatus = `累計学習 ${totalSamples}件`;
     if (c.skipped_api) {
-      $('status').textContent=`● 学習更新完了（採点 ${scored}件 / 実測 ${obs}件 / 対象 ${candidates}件 / 実績 ${recentObs}件）・予報APIは前回データを使用`;
+      $('status').textContent=`● 学習更新完了（${baseStatus} / ${totalStatus}）・予報APIは前回データを使用`;
     } else if (c.ok === false) {
-      $('status').textContent=`● 学習更新完了（採点 ${scored}件 / 実測 ${obs}件 / 対象 ${candidates}件 / 実績 ${recentObs}件）・予報更新は一時失敗`;
+      $('status').textContent=`● 学習更新完了（${baseStatus} / ${totalStatus}）・予報更新は一時失敗`;
     } else {
-      $('status').textContent=`● 学習データ更新完了（採点 ${scored}件 / 実測 ${obs}件 / 対象 ${candidates}件 / 実績 ${recentObs}件）`;
+      $('status').textContent=`● 学習データ更新完了（${baseStatus} / ${totalStatus}）`;
     }
 
   }catch(e){$('status').textContent='学習データ更新に失敗：'+(e.message||e)}
