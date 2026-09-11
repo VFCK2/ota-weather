@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報1.6</title>
+<title>OTA WEATHER | 大田区独自予報2.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -508,7 +508,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     </section>
   </div>
 
-  <div class="sectionTitle"><h2>この先60分</h2><span>短時間の変化を重点表示</span></div>
+  <div class="sectionTitle"><h2>この先6時間</h2><span>短時間の変化を重点表示</span></div>
   <section class="card"><div class="timeline" id="timeline"></div></section>
 
   <div class="sectionTitle"><h2>大田区 独自予報</h2><span>実況・短時間予報・学習補正を統合</span></div>
@@ -532,14 +532,6 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="mapTime" id="mapTime">--:--</div>
     </div>
     <div class="note">地図のスクロール操作を邪魔しないよう、ページ側のスクロールと地図操作を分離しています。地図内ではドラッグ・ズームが可能です。</div>
-  </section>
-
-    <section class="card">
-    <div class="engines">
-      <div class="engine"><b>01 / NOW</b><span>実況・短時間降水を最優先。直近の雨変化を判定。</span></div>
-      <div class="engine"><b>02 / SHORT</b><span>時間別予報と学習補正を統合。数時間先を判定。</span></div>
-      <div class="engine"><b>03 / DAILY</b><span>明日から7日間の傾向を整理して表示。</span></div>
-    </div>
   </section>
 
   <section class="card">
