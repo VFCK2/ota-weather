@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | JMAナウキャスト1.0</title>
+<title>OTA WEATHER | 大田区天気1.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -60,10 +60,7 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 .mapControls input{flex:1}
 .mapTime{font-size:12px;color:#355773;font-weight:700;min-width:90px;text-align:right}
 .note{font-size:12px;color:#536b84;line-height:1.6;margin-top:9px}
-.engines{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.engine{background:#f7f9fc;border:1px solid var(--line);border-radius:13px;padding:11px}
-.engine b{font-size:13px}.engine span{display:block;font-size:11px;color:#536b84;margin-top:4px;line-height:1.5}
-.learning{display:flex;justify-content:space-between;gap:12px;align-items:center}.learnText b{display:block;font-size:14px}.learnText span{font-size:12px;color:#536b84;font-weight:600}
+
 button.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:900}
 .status{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:700px){
@@ -108,44 +105,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  /* 週間予報 */
  .days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:9px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
  .days .day{flex:0 0 132px;scroll-snap-align:start}
- .engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
-}
-
-/* v1.3 視認性アップ */
-.todayCard{background:linear-gradient(145deg,#fff 0,#f7fbff 100%);border:1px solid #d8e8f7}
-.todayHead{display:flex;justify-content:space-between;align-items:flex-start}
-.todayLabel{font-size:22px;font-weight:900;margin-top:2px}
-.todayBadge{font-size:12px;font-weight:900;color:#4a6782;background:#fff;border:1px solid #dbe8f5;border-radius:999px;padding:6px 10px}
-.todayMain{display:flex;align-items:center;gap:16px;margin:14px 0 12px}
-.todayIcon{font-size:68px;line-height:1}
-.todaySummary{font-size:21px;font-weight:900;margin-bottom:8px}
-.todayTemp{display:flex;align-items:baseline;gap:7px;white-space:nowrap}
-.todayTemp b{font-size:34px;line-height:1}
-.todayTemp b:last-of-type{font-size:28px}
-.todayTemp span{font-size:12px;color:#607890;font-weight:800;margin-right:5px}
-.todayDetails{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.todayDetails div{background:#fff;border:1px solid #e0ebf5;border-radius:12px;padding:9px 11px}
-.todayDetails span{display:block;font-size:12px;color:#4b6680;font-weight:800}
-.todayDetails b{display:block;font-size:20px;margin-top:2px}
-.timebox{padding:10px 6px 11px;min-height:132px;display:flex;flex-direction:column;justify-content:center}
-.timebox .t{font-size:14px}
-.timebox .wx{font-size:30px;line-height:1;margin:5px 0}
-.timebox .p{font-size:24px;line-height:1.05}
-.timebox .r{font-size:12px;margin-top:4px}
-.day{padding:12px 6px 13px;min-height:148px}
-.day .d{font-size:15px}
-.day .ico{font-size:38px;margin:7px 0 4px}
-.day .daySummary{font-size:13px;font-weight:800;color:#526d87;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.day .t{font-size:17px;margin-top:5px}
-.day .t b:first-child{font-size:20px}
-.day .t b:last-child{font-size:17px}
-.day .rain{font-size:13px;margin-top:5px}
-.sectionTitle h2{font-size:18px}
-.sectionTitle span{font-size:13px}
-.metric span,.detail span{font-size:13px}
-.metric b,.detail b{font-size:20px}
-.note{font-size:13px}
-.engines b{font-size:14px}.engine span{font-size:12px}
+ 
 .status{font-size:12px}
 
 
@@ -475,18 +435,13 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 
 
-
-.nowcastGuide{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:#f5f9ff;border-top:1px solid #e6eef8;color:#35516f}
-.nowcastGuide div{display:flex;flex-direction:column;gap:3px;min-width:0}.nowcastGuide b{font-size:13px}.nowcastGuide span{font-size:11px;line-height:1.5}.nowcastGuide a{font-size:11px;font-weight:900;color:#1677d2;text-decoration:none;white-space:nowrap}
-@media(max-width:600px){.nowcastGuide{align-items:flex-start}.nowcastGuide a{font-size:10px}.mapTop span{font-size:9px}}
-
 .scoreWrap{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none}
 .scoreLabel{font-size:11px;font-weight:900;color:#46627f;white-space:nowrap}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header"><div class="brand"><b>OTA</b> WEATHER / JMA NOWCAST + FORECAST</div><div class="updated" id="updated">GAS接続中…</div></div>
+  <div class="header"><div class="brand"><b>OTA</b> WEATHER / INDEPENDENT FORECAST</div><div class="updated" id="updated">GAS接続中…</div></div>
 
   <div class="hero">
     <section class="card now">
@@ -523,10 +478,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <input id="slider" type="range" min="0" max="0" value="0">
       <div class="mapTime" id="mapTime">--:--</div>
     </div>
-    <div class="nowcastGuide">
-      <div><b>短時間予報の本体</b><span>今の雨雲と、これから60分の動きを気象庁ナウキャストで確認します。</span></div>
-      <a href="https://www.jma.go.jp/bosai/nowc/" target="_blank" rel="noopener">気象庁で詳しく見る ↗</a>
-    </div>
+    <div class="note">現在の雨雲と、これから60分の動きを気象庁ナウキャストで確認します。</div>
   </section>
 
   <div class="sectionTitle"><h2>この先6時間</h2><span>時間ごとの見通し</span></div>
@@ -535,8 +487,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
   <section class="card"><div class="days" id="days"></div></section>
 
-  <div class="status" id="status"></div>
-
+  <div class="status" id="status">独自予報・学習補正は一時停止中</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -555,7 +506,7 @@ function normalizeGAS(d){
   if(d.ok===false) throw new Error(d.error||'GAS APIエラー');
   const hourly=(d.hourly||[]).map(x=>({
     time:x.time||x.target_time,
-    precipitation_probability:Number(x.precipitation_probability ?? x.rain_probability ?? 0),
+    precipitation_probability:Number(x.precipitation_probability ?? (x.learned_probability!=null?Number(x.learned_probability)*100:null) ?? x.rain_probability ?? 0),
     precipitation:Number(x.precipitation ?? x.precipitation_mm ?? 0),
     temperature_2m:Number(x.temperature_2m ?? x.temperature_c ?? 0),
     relative_humidity_2m:Number(x.relative_humidity_2m ?? x.humidity_pct ?? 0),
@@ -662,7 +613,7 @@ async function load(){
   try{
     forecast=await getGASForecast();
     render();
-    $('status').textContent='● 接続成功 / JMAナウキャスト＋時間予報を表示中';
+    $('status').textContent='● GAS接続成功 / 現在・今日・6時間予報を表示中 / 独自予報は一時停止中';
   }catch(e){
     console.error('GAS取得失敗',e);
     $('status').textContent='GAS接続失敗：'+(e.message||e);
@@ -690,9 +641,9 @@ function render(){
   $('summary').textContent=wxText(c.weather_code);
 
   const future=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,6);
+  // 6時間予報では降水確率を表示せず、天気・降水量を優先します。
   $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
   $('days').innerHTML=d.slice(0,7).map(x=>`<div class="day"><div class="d">${new Date(x.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`).join('');
-
 }
 
 async function setupMap(){
@@ -700,8 +651,6 @@ async function setupMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
   L.marker([LAT,LON]).addTo(map).bindPopup('大田区').openPopup();
   await loadFrames();
-  // JMAナウキャストは5分更新なので、画面を開いている間も追従する。
-  setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
 }
 async function loadFrames(){
   try{
@@ -802,8 +751,18 @@ function showFrame(i){
   });
   $('mapTime').textContent=jmaTimeHM(f.validtime)+'　'+(f.type||'実況');
 }
+function findLatestFrameIndex(){
+  if(!frames.length)return 0;
+  const now=Date.now();
+  let best=0, bestDiff=Infinity;
+  frames.forEach((f,i)=>{const d=jmaDate(f.validtime); if(!d)return; const diff=Math.abs(d.getTime()-now); if(diff<bestDiff){bestDiff=diff;best=i}});
+  return best;
+}
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
-$('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
+$('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
-
-// 学習処理はGAS側で継続。画面上の独自補正は一旦使用しません。
+setupMap();load();
+setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
+</script>
+</body>
+</html>
