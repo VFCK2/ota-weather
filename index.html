@@ -180,6 +180,7 @@ function getGAS(action='forecast'){
     let timer=null, done=false;
     iframe.style.display='none';
     iframe.setAttribute('aria-hidden','true');
+    iframe.title='GAS bridge';
 
     const cleanup=()=>{
       if(timer) clearTimeout(timer);
@@ -203,8 +204,10 @@ function getGAS(action='forecast'){
     // script.google.com は Googleusercontent へリダイレクトするため、
     // script(JSONP)ではなく iframe + postMessage で確実に受信する。
     iframe.src=GAS_URL+'?action='+encodeURIComponent(action)+'&bridge=1&token='+encodeURIComponent(token)+'&_='+Date.now();
+    iframe.onload=()=>{ console.debug('GAS bridge iframe loaded', iframe.src); };
+    iframe.onerror=()=>fail('GASブリッジの読み込みに失敗しました');
     document.body.appendChild(iframe);
-    timer=setTimeout(()=>fail('GAS応答タイムアウト（15秒）'),15000);
+    timer=setTimeout(()=>fail('GAS応答タイムアウト（15秒）。Code.gsのブリッジ版が未デプロイの可能性があります'),15000);
   });
 }
 
