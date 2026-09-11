@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>大田区 独自予報 v0.9</title>
+<title>大田区 独自予報 v0.91</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#1677ff;--sky:#eaf6ff;--ink:#17324d;--muted:#60778b;--line:#d7e7f2;--card:#fff;--good:#0b7a53;--warn:#a36300}
@@ -64,7 +64,7 @@ button{border:0;border-radius:14px;background:var(--blue);color:white;font-weigh
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const GAS_URL = 'YOUR_GAS_WEB_APP_URL';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyhdHkl5VcmZaZniF7s2mytETgtY-KAha41KWGhLl3cis5o-iY2XKsKYE5Z11v76SLlpg/exec';
 const LAT=35.5613,LON=139.7161;
 const $=id=>document.getElementById(id);
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
