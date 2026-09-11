@@ -172,40 +172,31 @@ function normalizeGAS(d){
   return {current:c,hourly,daily,learning_bias:d.learning_bias??0,source:'GAS独自予報'};
 }
 
-function getGAS(){
+function getGAS(action='forecast'){
   return new Promise((resolve,reject)=>{
-    const name='gasCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const cb='otaGas_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
-    let done=false;
+    let timer;
     const cleanup=()=>{
-      if(done)return;
-      done=true;
-      try{delete window[name]}catch(e){window[name]=undefined}
+      clearTimeout(timer);
       script.remove();
+      try{delete window[cb]}catch(e){window[cb]=undefined}
     };
-    const timer=setTimeout(()=>{
+    window[cb]=(data)=>{
+      cleanup();
+      if(data && data.ok===false) reject(new Error(data.error||'GAS error'));
+      else resolve(normalizeGAS(data));
+    };
+    script.onerror=()=>{
+      cleanup();
+      reject(new Error('GAS Webアプリに接続できません'));
+    };
+    script.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
+    document.head.appendChild(script);
+    timer=setTimeout(()=>{
       cleanup();
       reject(new Error('GAS応答タイムアウト'));
-    },10000);
-
-    window[name]=(d)=>{
-      clearTimeout(timer);
-      cleanup();
-      if(!d || d.error) reject(new Error(d&&d.error?d.error:'GASから不正なデータ'));
-      else {
-        try{resolve(normalizeGAS(d))}
-        catch(e){reject(e)}
-      }
-    };
-
-    script.onerror=()=>{
-      clearTimeout(timer);
-      cleanup();
-      reject(new Error('GASへ接続できません'));
-    };
-
-    script.src=GAS_URL+'?action=forecast&callback='+encodeURIComponent(name)+'&_='+Date.now();
-    document.head.appendChild(script);
+    },15000);
   });
 }
 
@@ -223,7 +214,7 @@ async function load(){
   $('status').textContent='天気データを取得中…';
   $('updated').textContent='取得中';
   try{
-    forecast=await getGAS();
+    forecast=await getGAS('forecast'); forecast.source='GAS独自予報';
   }catch(gasErr){
     console.warn('GAS取得失敗',gasErr);
     try{ forecast=await getDirect(); }
@@ -375,7 +366,17 @@ function showFrame(i){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
-$('collect').onclick=async()=>{ $('status').textContent='学習データ更新中…'; try{const r=await fetch(GAS_URL+'?action=collect&_='+Date.now(),{cache:'no-store'});const text=await r.text();let data;try{data=JSON.parse(text)}catch(e){throw new Error('GASの応答を確認できません')}if(data.error)throw new Error(data.error);$('status').textContent='学習データを更新しました。';load()}catch(e){$('status').textContent='学習データ更新に失敗: '+e.message}};
+$('collect').onclick=async()=>{
+  $('status').textContent='学習データ更新中…';
+  try{
+    const data=await getGAS('collect');
+    if(!data || data.ok===false) throw new Error(data?.error||'GAS更新エラー');
+    $('status').textContent='学習データを更新しました。採点 '+(data.scored||0)+'件 / 実測 '+(data.observations||0)+'件';
+    await load();
+  }catch(e){
+    $('status').textContent='学習データ更新に失敗: '+e.message;
+  }
+};
 setupMap();load();
 </script>
 </body>
