@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報1</title>
+<title>OTA WEATHER | 大田区独自予報2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -173,87 +173,80 @@ function normalizeGAS(d){
   return {current:c,hourly,daily,learning_bias:Number(d.learning_bias??0),source:'GAS独自予報',generated_at:d.generated_at||''};
 }
 
-// GAS接続はiframeブリッジを第一候補にする。
-// GitHub Pages → GAS → script.googleusercontent.com のリダイレクトを
-// 親ページ側のscript実行に依存しないため、JSONPより安定しやすい。
-let gasBusy=false, gasPending=null, gasRequestId=0;
+// GAS通信は、Apps Script公式のJSONP方式を使用。
+// 接続確認はSpreadsheetAppを使わない「ping」にするため高速。
+let gasBusy = false;
+let gasJsonpPending = null;
+let gasRequestId = 0;
 
-function gasMessageHandler(ev){
-  const d=ev && ev.data;
-  const p=gasPending;
-  if(!p || !d || d.type!=='OTA_WEATHER_GAS_BRIDGE' || d.id!==p.id) return;
-  gasPending=null;
-  clearTimeout(p.timer);
-  if(p.iframe){p.iframe.remove();}
-  gasBusy=false;
-  if(d.payload && d.payload.ok===false) p.reject(new Error(d.payload.error||'GAS APIエラー'));
-  else p.resolve(d.payload||null);
-}
-window.addEventListener('message',gasMessageHandler);
+window.otaWeatherCallback = function(payload) {
+  const p = gasJsonpPending;
+  if (!p) return;
 
-function getGASBridge(action='latest', timeout=12000){
-  if(gasPending) return Promise.reject(new Error('GAS通信が重複しています'));
-  return new Promise((resolve,reject)=>{
-    gasBusy=true;
-    const id='gas_'+Date.now()+'_'+(++gasRequestId);
-    const iframe=document.createElement('iframe');
-    iframe.style.display='none';
-    iframe.setAttribute('aria-hidden','true');
-    const p={resolve,reject,iframe,id,timer:null};
-    gasPending=p;
-    p.timer=setTimeout(()=>{
-      if(gasPending!==p)return;
-      gasPending=null;
-      gasBusy=false;
-      iframe.remove();
-      reject(new Error('GAS応答タイムアウト（12秒）'));
-    },timeout);
-    iframe.src=GAS_URL+'?action=bridge&target='+encodeURIComponent(action)+'&id='+encodeURIComponent(id)+'&_='+Date.now();
-    document.body.appendChild(iframe);
-  });
-}
-
-// JSONPは予備経路。iframeブリッジが使えない環境だけこちらへ切り替える。
-let gasJsonpPending=null;
-window.otaWeatherCallback=function(payload){
-  const p=gasJsonpPending;
-  if(!p)return;
-  gasJsonpPending=null;
+  gasJsonpPending = null;
+  gasBusy = false;
   clearTimeout(p.timer);
   p.script.remove();
-  if(payload&&payload.ok===false)p.reject(new Error(payload.error||'GAS APIエラー'));
-  else p.resolve(payload||null);
-};
-function getGASJsonp(action='latest',timeout=10000){
-  if(gasJsonpPending)return Promise.reject(new Error('GAS JSONP通信が重複しています'));
-  return new Promise((resolve,reject)=>{
-    const s=document.createElement('script');
-    const p={script:s,resolve,reject,timer:null};
-    gasJsonpPending=p;
-    p.timer=setTimeout(()=>{
-      if(gasJsonpPending!==p)return;
-      gasJsonpPending=null;
-      s.remove();
-      reject(new Error('GAS JSONP応答タイムアウト（10秒）'));
-    },timeout);
-    s.async=true;
-    s.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback=otaWeatherCallback&_='+Date.now();
-    document.head.appendChild(s);
-  });
-}
 
-async function getGAS(action='latest'){
-  try{
-    return await getGASBridge(action,12000);
-  }catch(first){
-    // 接続テスト・参照系はJSONPで一度だけ救済する。
-    if(action==='latest' || action==='forecast' || action==='learning'){
-      try{return await getGASJsonp(action,10000)}catch(second){
-        throw new Error((first.message||first)+' / 予備通信: '+(second.message||second));
-      }
-    }
-    throw first;
+  if (payload && payload.ok === false) {
+    p.reject(new Error(payload.error || 'GAS APIエラー'));
+    return;
   }
+
+  p.resolve(payload || null);
+};
+
+function getGAS(action='latest', timeout=15000) {
+  if (gasBusy) {
+    return Promise.reject(new Error('GAS通信中です'));
+  }
+
+  return new Promise((resolve, reject) => {
+    gasBusy = true;
+
+    const script = document.createElement('script');
+    const id = 'gas_' + Date.now() + '_' + (++gasRequestId);
+
+    const p = {
+      script,
+      resolve,
+      reject,
+      timer: null
+    };
+
+    gasJsonpPending = p;
+
+    p.timer = setTimeout(() => {
+      if (gasJsonpPending !== p) return;
+
+      gasJsonpPending = null;
+      gasBusy = false;
+      script.remove();
+
+      reject(new Error('GAS応答タイムアウト（' + Math.round(timeout / 1000) + '秒）'));
+    }, timeout);
+
+    script.onerror = () => {
+      if (gasJsonpPending !== p) return;
+
+      gasJsonpPending = null;
+      gasBusy = false;
+      clearTimeout(p.timer);
+      script.remove();
+
+      reject(new Error('GASスクリプト読み込みエラー'));
+    };
+
+    script.async = true;
+    script.src =
+      GAS_URL +
+      '?action=' + encodeURIComponent(action) +
+      '&callback=otaWeatherCallback' +
+      '&_=' + encodeURIComponent(Date.now()) +
+      '_' + encodeURIComponent(id);
+
+    document.head.appendChild(script);
+  });
 }
 
 async function getGASForecast(){
@@ -417,9 +410,9 @@ $('gasTest').onclick=async()=>{
   if(gasBusy){$('status').textContent='GAS通信中です…';return}
   $('status').textContent='GAS接続テスト中…';
   try{
-    const d=await getGAS('latest');
-    const rows=Array.isArray(d?.learning?.rows)?d.learning.rows.length:0;
-    $('status').textContent='● GAS接続OK / latest受信 / 学習行 '+rows+'件';
+    const d=await getGAS('ping',8000);
+    if(!d || d.pong!==true) throw new Error('GAS pingの応答が不正です');
+    $('status').textContent='● GAS接続OK / ping受信 / '+timeHM(d.at);
   }catch(e){$('status').textContent='GAS接続テスト失敗：'+(e.message||e)}
 };
 $('collect').onclick=async()=>{
