@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報9</title>
+<title>OTA WEATHER | 大田区独自予報1.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -72,29 +72,30 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:stretch}
  .hero>.card{min-width:0;margin-bottom:0;padding:12px 10px;border-radius:15px}
  .place{font-size:20px;margin:3px 0 9px}
- .currentRow{gap:7px}
- .weatherIcon{font-size:39px}
- .temp{font-size:39px}
- .temp small{font-size:15px}
- .summary{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .currentRow{gap:6px;align-items:center}
+ .weatherIcon{font-size:40px;flex:none}
+ .currentRow>div:last-child{min-width:0}
+ .temp{font-size:39px;line-height:1}
+ .temp small{font-size:14px}
+ .summary{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  .metrics{grid-template-columns:1fr;gap:5px;margin-top:9px}
  .metric{padding:6px 8px;display:flex;align-items:center;justify-content:space-between}
  .metric span{font-size:11px}.metric b{font-size:15px}
 
  .todayHead{display:block}
- .todayLabel{font-size:19px}
+ .todayLabel{font-size:18px;line-height:1.15;margin-top:2px}
  .todayBadge{display:none}
- .todayMain{gap:7px;margin:10px 0 9px}
- .todayIcon{font-size:43px}
- .todaySummary{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .todayTemp{gap:4px}
- .todayTemp b{font-size:25px}
- .todayTemp b:last-of-type{font-size:22px}
- .todayTemp span{font-size:9px;margin-right:2px}
- .todayDetails{grid-template-columns:1fr;gap:5px}
- .todayDetails div{padding:6px 8px}
- .todayDetails span{font-size:10px}
- .todayDetails b{font-size:15px}
+ .todayMain{display:block;text-align:center;margin:7px 0 8px}
+ .todayIcon{font-size:42px;line-height:1;margin-bottom:5px}
+ .todaySummary{font-size:13px;line-height:1.25;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:7px}
+ .todayTemp{justify-content:center;gap:5px;line-height:1;white-space:nowrap}
+ .todayTemp b{font-size:26px;letter-spacing:-.03em}
+ .todayTemp b:last-of-type{font-size:23px}
+ .todayTemp span{font-size:9px;margin-right:1px;color:#607890}
+ .todayDetails{display:grid;grid-template-columns:1fr;gap:5px;margin-top:7px}
+ .todayDetails div{padding:6px 8px;display:flex;align-items:center;justify-content:space-between;min-height:34px}
+ .todayDetails span{font-size:11px}
+ .todayDetails b{font-size:16px;line-height:1}
 
  /* スマホ：60分も横スクロール */
  .timeline{display:flex;grid-template-columns:none;gap:8px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 9px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;scrollbar-width:none}
