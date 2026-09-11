@@ -139,143 +139,119 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfcybyhdHkl5VcmZaZniF7s2mytETgtY-KAha41KWGhLl3cis5o-iY2XKsKYE5Z11v76SLlpg/exec';
+const GAS_URL="https://script.google.com/macros/s/AKfcybyhdHkl5VcmZaZniF7s2mytETgtY-KAha41KWGhLl3cis5o-iY2XKsKYE5Z11v76SLlpg/exec";
 const LAT=35.5613, LON=139.7161;
+let forecast=null, frames=[], map, rainLayer, timer=null;
 const $=id=>document.getElementById(id);
+function pct(v){return v==null||isNaN(v)?"--":Math.round(Number(v))+"%"}
+function timeHM(s){try{return new Date(s).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}catch(e){return "--:--"}}
+function wxIcon(code){code=Number(code);if(code===0)return"☀️";if(code<=3)return"🌤️";if(code<=48)return"☁️";if(code<=67)return"🌧️";if(code<=77)return"🌨️";if(code<=82)return"🌦️";return"⛈️"}
+function wxText(code){code=Number(code);if(code===0)return"晴れ";if(code<=3)return"晴れ時々くもり";if(code<=48)return"くもり";if(code<=67)return"雨";if(code<=77)return"雪";if(code<=82)return"にわか雨";return"雷雨"}
 
-function wxIcon(c){c=Number(c);if(c===0)return'☀️';if(c<=3)return'🌤️';if(c<=48)return'☁️';if(c<=67)return'🌧️';if(c<=77)return'🌨️';if(c<=82)return'🌦️';return'⛈️'}
-function wxText(c){c=Number(c);if(c===0)return'晴れ';if(c<=3)return'晴れ時々くもり';if(c<=48)return'くもり';if(c<=67)return'雨';if(c<=77)return'雪';if(c<=82)return'にわか雨';return'雷雨'}
-function tm(s){const d=new Date(s);return isNaN(d)?'--:--':d.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}
-function pct(v){return v==null||isNaN(v)?'--':Math.round(Number(v))+'%'}
+function normalizeGAS(d){
+  if(!d) throw new Error('空のデータ');
+  const hourly=(d.hourly||[]).map(x=>({
+    time:x.time||x.target_time,
+    precipitation_probability:Number(x.precipitation_probability ?? x.learned_probability*100 ?? x.rain_probability ?? 0),
+    precipitation:Number(x.precipitation ?? x.precipitation_mm ?? 0),
+    temperature_2m:Number(x.temperature_2m ?? x.temperature_c ?? 0),
+    relative_humidity_2m:Number(x.relative_humidity_2m ?? x.humidity_pct ?? 0),
+    wind_speed_10m:Number(x.wind_speed_10m ?? x.wind_kmh ?? 0),
+    weather_code:Number(x.weather_code ?? 0)
+  }));
+  const daily=(d.daily||[]).map(x=>({
+    time:x.time||x.date,
+    weather_code:Number(x.weather_code??0),
+    temperature_2m_max:Number(x.temperature_2m_max ?? x.max_c ?? 0),
+    temperature_2m_min:Number(x.temperature_2m_min ?? x.min_c ?? 0),
+    precipitation_sum:Number(x.precipitation_sum ?? x.precipitation_mm ?? 0),
+    precipitation_probability_max:Number(x.precipitation_probability_max ?? x.precipitation_probability ?? 0),
+    wind_speed_10m_max:Number(x.wind_speed_10m_max ?? x.wind_kmh ?? 0)
+  }));
+  const c=d.current||{};
+  return {current:c,hourly,daily,learning_bias:d.learning_bias??0,source:'GAS独自予報'};
+}
 
-async function getGAS(action){
-  const u=GAS_URL+'?action='+encodeURIComponent(action)+'&_='+Date.now();
-  const r=await fetch(u,{cache:'no-store'});
-  const t=await r.text();
-  if(!r.ok)throw new Error('GAS HTTP '+r.status);
-  let j;try{j=JSON.parse(t)}catch(e){throw new Error('GAS応答がJSONではありません')}
-  if(j && j.ok===false)throw new Error(j.error||'GAS API error');
-  return j;
+async function getGAS(){
+  const r=await fetch(GAS_URL+"?action=forecast&_="+Date.now(),{cache:'no-store'});
+  const text=await r.text();
+  if(!r.ok) throw new Error('GAS HTTP '+r.status);
+  let d; try{d=JSON.parse(text)}catch(e){throw new Error('GASがJSONを返していません')}
+  if(d.error) throw new Error(d.error);
+  return normalizeGAS(d);
 }
 
 async function getDirect(){
-  const u='https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+
-  '&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m'+
-  '&minutely_15=precipitation,rain,showers,weather_code'+
-  '&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'+
-  '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max'+
-  '&forecast_days=7&forecast_minutely_15=16&timezone=Asia%2FTokyo';
-  const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('Open-Meteo HTTP '+r.status);
-  const x=await r.json();
-  return {
-    current:x.current||{},
-    minutely15:(x.minutely_15?.time||[]).map((t,i)=>({time:t,precipitation_mm:Number(x.minutely_15.precipitation?.[i]||0),weather_code:Number(x.minutely_15.weather_code?.[i]||0)})),
-    hourly:(x.hourly?.time||[]).map((t,i)=>({time:t,precipitation_probability:Number(x.hourly.precipitation_probability?.[i]||0),precipitation:Number(x.hourly.precipitation?.[i]||0),weather_code:Number(x.hourly.weather_code?.[i]||0)})),
-    daily:(x.daily?.time||[]).map((t,i)=>({time:t,temperature_2m_max:Number(x.daily.temperature_2m_max?.[i]||0),temperature_2m_min:Number(x.daily.temperature_2m_min?.[i]||0),precipitation_probability_max:Number(x.daily.precipitation_probability_max?.[i]||0),weather_code:Number(x.daily.weather_code?.[i]||0)})),
-    learning_bias:0
-  };
-}
-
-function normalize(x){
-  const h=(x.hourly||[]).map(v=>({
-    time:v.time||v.target_time,
-    precipitation_probability:Number(v.precipitation_probability??v.rain_probability??(Number(v.learned_probability||0)*100)),
-    precipitation:Number(v.precipitation??v.precipitation_mm??0),
-    weather_code:Number(v.weather_code??0)
-  }));
-  const d=(x.daily||[]).map(v=>({
-    time:v.time||v.date,
-    temperature_2m_max:Number(v.temperature_2m_max??v.max_c??0),
-    temperature_2m_min:Number(v.temperature_2m_min??v.min_c??0),
-    precipitation_probability_max:Number(v.precipitation_probability_max??v.precipitation_probability??0),
-    weather_code:Number(v.weather_code??0)
-  }));
-  return {...x,hourly:h,daily:d,minutely15:x.minutely15||[]};
-}
-
-function render(x){
-  x=normalize(x);
-  const c=x.current||{}, h=x.hourly, d=x.daily, m=x.minutely15;
-  if($('temp'))$('temp').innerHTML=(c.temperature_2m??'--')+'<small>℃</small>';
-  if($('humidity'))$('humidity').textContent=(c.relative_humidity_2m??'--')+'%';
-  if($('wind'))$('wind').textContent=(c.wind_speed_10m??'--')+' km/h';
-  if($('rainNow'))$('rainNow').textContent=(c.precipitation??0)+' mm';
-  if($('icon'))$('icon').textContent=wxIcon(c.weather_code);
-  if($('summary'))$('summary').textContent=wxText(c.weather_code);
-  if($('updated'))$('updated').textContent='更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-
-  const probs=h.slice(0,6).map(v=>Number(v.precipitation_probability||0));
-  const risk=probs.length?Math.max(...probs):0;
-  const first=probs.findIndex(v=>v>=40);
-  const peak=probs.length?probs.indexOf(Math.max(...probs)):-1;
-  let score=Math.max(0,Math.min(100,100-risk));if(risk>=70)score-=10;else if(risk>=50)score-=5;score=Math.max(0,Math.round(score));
-  if($('score'))$('score').textContent=score;
-  if($('scoreCircle'))$('scoreCircle').style.setProperty('--score',(score*3.6)+'deg');
-  if($('judge'))$('judge').textContent=score>=82?'かなり安定':score>=65?'大きな崩れはなし':score>=45?'変化に注意':'雨への警戒';
-  if($('judgeSub'))$('judgeSub').textContent=risk>=60?'短時間に雨へ変化する可能性があります':'現時点では急な雨の可能性は低めです';
-  if($('rainRisk'))$('rainRisk').textContent=pct(risk);
-  if($('onset'))$('onset').textContent=first<0?'今のところなし':tm(h[first].time);
-  if($('peak'))$('peak').textContent=peak<0?'--':tm(h[peak].time);
-  if($('umbrella'))$('umbrella').textContent=risk>=60?'持っておくと安心':risk>=35?'念のため':'不要そう';
-  if($('confidence'))$('confidence').textContent='統合判定';
-
-  if($('timeline'))$('timeline').innerHTML=h.slice(0,6).map(v=>`<div class="timebox"><div class="t">${tm(v.time)}</div><div class="p">${pct(v.precipitation_probability)}</div><div class="r">${Number(v.precipitation||0).toFixed(1)} mm</div></div>`).join('');
-  if($('days'))$('days').innerHTML=d.slice(0,7).map(v=>`<div class="day"><div class="d">${new Date(v.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(v.weather_code)}</div><div class="t">${Math.round(v.temperature_2m_max)}° / ${Math.round(v.temperature_2m_min)}°</div><div class="rain">☔ ${Math.round(v.precipitation_probability_max)}%</div></div>`).join('');
+  const url='https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+'&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&forecast_days=7&timezone=Asia%2FTokyo';
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('Open-Meteo HTTP '+r.status);
+  const d=await r.json();
+  const h=[]; for(let i=0;i<d.hourly.time.length;i++) h.push({time:d.hourly.time[i],precipitation_probability:Number(d.hourly.precipitation_probability[i]??0),precipitation:Number(d.hourly.precipitation[i]??0),temperature_2m:Number(d.hourly.temperature_2m[i]??0),relative_humidity_2m:Number(d.hourly.relative_humidity_2m[i]??0),wind_speed_10m:Number(d.hourly.wind_speed_10m[i]??0),weather_code:Number(d.hourly.weather_code[i]??0)});
+  const days=[]; for(let i=0;i<d.daily.time.length;i++) days.push({time:d.daily.time[i],weather_code:Number(d.daily.weather_code[i]??0),temperature_2m_max:Number(d.daily.temperature_2m_max[i]??0),temperature_2m_min:Number(d.daily.temperature_2m_min[i]??0),precipitation_sum:Number(d.daily.precipitation_sum[i]??0),precipitation_probability_max:Number(d.daily.precipitation_probability_max[i]??0),wind_speed_10m_max:Number(d.daily.wind_speed_10m_max[i]??0)});
+  return {current:d.current||{},hourly:h,daily:days,learning_bias:0,source:'Open-Meteo直接取得'};
 }
 
 async function load(){
-  if($('status'))$('status').textContent='予報データを取得中…';
+  $('status').textContent='天気データを取得中…';
+  $('updated').textContent='取得中';
   try{
-    const x=await getGAS('forecast');
-    render(x);
-    if($('status'))$('status').textContent='GAS接続OK / 最新データを表示中';
-  }catch(e){
-    console.warn(e);
-    try{
-      const x=await getDirect();
-      render(x);
-      if($('status'))$('status').textContent='GASに接続できないため、天気データを直接取得しています';
-    }catch(e2){
-      console.error(e2);
-      if($('status'))$('status').textContent='データ取得失敗: '+e2.message;
+    forecast=await getGAS();
+  }catch(gasErr){
+    console.warn('GAS取得失敗',gasErr);
+    try{ forecast=await getDirect(); }
+    catch(directErr){
+      console.error('直接取得も失敗',directErr);
+      $('status').textContent='天気データを取得できませんでした。GAS: '+gasErr.message+' / 直接: '+directErr.message;
+      $('updated').textContent='データ取得エラー';
+      return;
     }
   }
+  render();
+  $('status').textContent='● '+forecast.source+' / 最新データを表示中';
 }
 
-let map, rainLayer, frames=[], playTimer=null;
+function render(){
+  const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
+  $('updated').textContent='更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+  $('temp').innerHTML=(c.temperature_2m??'--')+'<small>℃</small>';
+  $('humidity').textContent=(c.relative_humidity_2m??'--')+'%';
+  $('wind').textContent=(c.wind_speed_10m??'--')+' km/h';
+  $('rainNow').textContent=(c.precipitation??0)+' mm';
+  $('icon').textContent=wxIcon(c.weather_code);
+  $('summary').textContent=wxText(c.weather_code);
+
+  const future=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,6);
+  const probs=future.map(x=>Number(x.precipitation_probability||0));
+  const risk=probs.length?Math.max(...probs):0;
+  const first=probs.findIndex(x=>x>=40);
+  const peakIdx=probs.length?probs.indexOf(Math.max(...probs)): -1;
+  let score=Math.max(0,100-risk); if(risk>=70)score-=10; else if(risk>=50)score-=5; score=Math.max(0,Math.round(score));
+  $('score').textContent=score; $('scoreCircle').style.setProperty('--score',(score*3.6)+'deg');
+  $('judge').textContent=score>=82?'かなり安定':score>=65?'大きな崩れはなし':score>=45?'変化に注意':'雨への警戒';
+  $('judgeSub').textContent=risk>=60?'短時間に雨へ変化する可能性があります':'現時点では急な雨の可能性は低めです';
+  $('rainRisk').textContent=pct(risk);
+  $('onset').textContent=first<0?'今のところなし':timeHM(future[first]?.time);
+  $('peak').textContent=peakIdx<0?'--':timeHM(future[peakIdx]?.time);
+  $('umbrella').textContent=risk>=60?'持っておくと安心':risk>=35?'念のため':'不要そう';
+  $('confidence').textContent=forecast.source==='GAS独自予報'?'学習補正を適用':'直接取得';
+  $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="p">${pct(x.precipitation_probability)}</div><div class="r">${x.precipitation??0} mm</div></div>`).join('');
+  $('days').innerHTML=d.slice(0,7).map(x=>`<div class="day"><div class="d">${new Date(x.time).toLocaleDateString('ja-JP',{weekday:'short'})}</div><div class="ico">${wxIcon(x.weather_code)}</div><div class="t">${Math.round(x.temperature_2m_max??0)}° / ${Math.round(x.temperature_2m_min??0)}°</div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`).join('');
+  $('learning').textContent=forecast.learning_bias!=null?`学習補正 ${Number(forecast.learning_bias).toFixed(3)}`:'学習データを確認中';
+}
+
 async function setupMap(){
   map=L.map('map',{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:true}).setView([LAT,LON],11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
   L.marker([LAT,LON]).addTo(map).bindPopup('大田区').openPopup();
-  try{
-    const r=await fetch('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json?_='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw new Error('JMA HTTP '+r.status);
-    const a=await r.json();frames=a.slice(0,13).reverse();
-    if($('slider'))$('slider').max=Math.max(0,frames.length-1);
-    showFrame(frames.length-1);
-  }catch(e){if($('mapTime'))$('mapTime').textContent='取得不可';console.warn(e)}
+  await loadFrames();
 }
-function showFrame(i){
-  const f=frames[i];if(!f)return;
-  const u=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;
-  if(rainLayer)map.removeLayer(rainLayer);
-  rainLayer=L.tileLayer(u,{opacity:.62,maxZoom:12,minZoom:4,zIndex:500}).addTo(map);
-  if($('mapTime'))$('mapTime').textContent=String(f.validtime).slice(8,10)+':'+String(f.validtime).slice(10,12);
-}
-if($('slider'))$('slider').oninput=e=>showFrame(Number(e.target.value));
-if($('latest'))$('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
-if($('play'))$('play').onclick=()=>{
-  if(playTimer){clearInterval(playTimer);playTimer=null;$('play').textContent='▶ 再生';return}
-  let i=0;$('play').textContent='⏸ 停止';
-  playTimer=setInterval(()=>{showFrame(i);if($('slider'))$('slider').value=i;i++;if(i>=frames.length){clearInterval(playTimer);playTimer=null;$('play').textContent='▶ 再生'}},650);
-};
-if($('collect'))$('collect').onclick=async()=>{
-  if($('status'))$('status').textContent='学習データ更新中…';
-  try{await getGAS('collect');if($('status'))$('status').textContent='学習データを更新しました';load()}
-  catch(e){if($('status'))$('status').textContent='学習データ更新失敗: '+e.message}
-};
-
-setupMap();
-load();
-</script></body>
+async function loadFrames(){try{const rr=await fetch('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json?_='+Date.now(),{cache:'no-store'});if(!rr.ok)throw new Error('JMA '+rr.status);const arr=await rr.json();frames=arr.slice(0,13).reverse();$('slider').max=Math.max(0,frames.length-1);showFrame(frames.length-1)}catch(e){$('mapTime').textContent='取得不可'}}
+function showFrame(i){if(!frames[i])return;const f=frames[i];const url=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;if(rainLayer)map.removeLayer(rainLayer);rainLayer=L.tileLayer(url,{opacity:.62,tileSize:256,maxZoom:12,minZoom:4,zIndex:500,errorTileUrl:''}).addTo(map);const vt=String(f.validtime||'');$('mapTime').textContent=vt.length>=12?vt.slice(8,10)+':'+vt.slice(10,12):'--:--'}
+$('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
+$('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
+$('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
+$('collect').onclick=async()=>{ $('status').textContent='学習データ更新中…'; try{const r=await fetch(GAS_URL+'?action=collect&_='+Date.now(),{cache:'no-store'});const text=await r.text();let data;try{data=JSON.parse(text)}catch(e){throw new Error('GASの応答を確認できません')}if(data.error)throw new Error(data.error);$('status').textContent='学習データを更新しました。';load()}catch(e){$('status').textContent='学習データ更新に失敗: '+e.message}};
+setupMap();load();
+</script>
+</body>
 </html>
