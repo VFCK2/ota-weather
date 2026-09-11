@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報5</title>
+<title>OTA WEATHER | 大田区独自予報6</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -424,7 +424,14 @@ $('collect').onclick=async()=>{
     const scored = r && r.score ? Number(r.score.saved || 0) : 0;
     const obs = r && r.score ? Number(r.score.observations || 0) : 0;
     await load();
-    $('status').textContent=`● 学習データ更新完了（採点 ${scored}件 / 実測 ${obs}件）`;
+    const c = r && r.collect ? r.collect : {};
+    if (c.skipped_api) {
+      $('status').textContent=`● 学習更新完了（採点 ${scored}件 / 実測 ${obs}件）・予報APIは前回データを使用`;
+    } else if (c.ok === false) {
+      $('status').textContent=`● 学習更新完了（採点 ${scored}件 / 実測 ${obs}件）・予報更新は一時失敗`;
+    } else {
+      $('status').textContent=`● 学習データ更新完了（採点 ${scored}件 / 実測 ${obs}件）`;
+    }
 
   }catch(e){$('status').textContent='学習データ更新に失敗：'+(e.message||e)}
 };
