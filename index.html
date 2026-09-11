@@ -1,35 +1,38 @@
 <!doctype html>
 <html lang="ja"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220"><title>大田区 超局地天気 v0.5</title>
+<meta name="theme-color" content="#0b1220"><title>大田区 超局地天気 v0.6</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#152033;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#07111f;color:#eef5ff;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 20% 0%,#12345a 0,transparent 38%),radial-gradient(circle at 90% 20%,#17324b 0,transparent 34%),#07111f}
+header{background:rgba(5,13,25,.88)!important;border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px)}
 header{background:#0b1220;color:#fff;padding:16px}.sub{font-size:13px;opacity:.78}h1{font-size:21px;margin:0 0 3px}
-main{max-width:760px;margin:auto;padding:12px 10px 36px}.card{background:#fff;border-radius:18px;padding:14px;margin-bottom:11px;box-shadow:0 2px 12px #0000000b}
-.now{display:grid;grid-template-columns:1fr auto;align-items:center}.label{font-size:14px;font-weight:600;color:#596577} .temp{font-size:48px;font-weight:800}.weather{font-size:20px;font-weight:700}.updated{font-size:12px;color:#718096}
-.score{font-size:40px;font-weight:800}.advice{font-size:14px;font-weight:700}h2{font-size:20px;margin:0 0 10px}
+main{max-width:760px;margin:auto;padding:12px 10px 36px}.card{background:rgba(16,28,45,.82);border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 10px 30px #0008;backdrop-filter:blur(14px)}
+.now{display:grid;grid-template-columns:1fr auto;align-items:center}.label{font-size:13px;font-weight:650;color:#aab9cc} .temp{font-size:48px;font-weight:800}.weather{font-size:20px;font-weight:750;color:#f5f9ff}.updated{font-size:12px;color:#91a2b8}
+.score{font-size:40px;font-weight:800}.advice{font-size:14px;font-weight:750;color:#d9e7f7}h2{font-size:19px;color:#f3f7fc;margin:0 0 10px}
 .map{height:330px;border-radius:14px;overflow:hidden;background:#dfe7ef;touch-action:pan-y}.mapbar,.controls{display:flex;gap:6px;align-items:center;margin-top:8px}
-button{border:0;border-radius:10px;padding:9px 10px;background:#0b1220;color:#fff;font-weight:700}.secondary{background:#eef2f6;color:#263447}
+button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px;background:#182b43;color:#fff;font-weight:750}.secondary{background:rgba(255,255,255,.08);color:#e4edf8}
 .mapbar span,.controls span{font-size:14px;color:#566274}.mapbar span{margin-left:auto}.controls input{flex:1}
 .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#4f5b6b}.legend i{width:10px;height:10px;display:inline-block;border-radius:3px}
-.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.slot{background:#f4f7fb;border-radius:11px;padding:8px 3px;text-align:center}
-.time{font-size:15px;font-weight:650;color:#667085}.rain{font-size:22px;font-weight:800;margin:4px 0}.mm{font-size:13px;color:#667085}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:#f5f7fa;padding:13px;border-radius:11px}.metric b{display:block;font-size:23px;margin-top:3px}
-.note,.status{font-size:14px;color:#667085;line-height:1.6}.status{text-align:center;margin-top:6px}
-.arrival{background:#0f172a;color:#fff;text-align:center;padding:18px 14px}
-.arrivalLabel{font-size:16px;opacity:.82}.arrival #arrivalMain{font-size:34px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:14px;opacity:.72;line-height:1.5}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.slot{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:10px 3px;text-align:center}
+.time{font-size:15px;font-weight:750;color:#dbe6f3}.rain{font-size:22px;font-weight:800;margin:4px 0}.mm{font-size:13px;color:#9cafc3}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);padding:13px;border-radius:13px}.metric b{display:block;font-size:23px;margin-top:3px}
+.note,.status{font-size:13px;color:#9cafc3;line-height:1.6}.status{text-align:center;margin-top:6px}
+.arrival{background:linear-gradient(135deg,rgba(22,57,91,.95),rgba(11,27,46,.95));color:#fff;text-align:center;padding:20px 14px;border-color:rgba(105,180,255,.22)}
+.arrivalLabel{font-size:16px;opacity:.82}.arrival #arrivalMain{font-size:36px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:13px;opacity:.72;line-height:1.5}
 .leaflet-control-attribution{font-size:8px!important}
 @media(max-width:500px){.map{height:340px}.timeline{grid-template-columns:repeat(3,1fr)}}
 
 
 .daygrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.daycard{background:#f5f7fa;border-radius:14px;padding:13px}
-.daytitle{font-size:15px;font-weight:800}.dayicon{font-size:31px;margin:4px 0}.daytemp{font-size:22px;font-weight:800}.dayrain{font-size:14px;margin-top:5px}.daydetail{font-size:12px;color:#5d6877;margin-top:5px;line-height:1.5}
-.weekly{display:grid;gap:7px}.weekrow{display:grid;grid-template-columns:70px 46px 1fr auto;align-items:center;gap:8px;background:#f5f7fa;border-radius:12px;padding:10px}
+.daycard{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:13px}
+.daytitle{font-size:15px;font-weight:800}.dayicon{font-size:31px;margin:4px 0}.daytemp{font-size:22px;font-weight:800}.dayrain{font-size:14px;margin-top:5px}.daydetail{font-size:12px;color:#9cafc3;margin-top:5px;line-height:1.5}
+.weekly{display:grid;gap:7px}.weekrow{display:grid;grid-template-columns:70px 46px 1fr auto;align-items:center;gap:8px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px}
 .weekday{font-size:14px;font-weight:750}.weekicon{font-size:24px;text-align:center}.weektemp{font-size:14px;font-weight:750}.weekrain{font-size:13px;font-weight:700;text-align:right}
-.engines{display:grid;gap:7px}.engines div{background:#f5f7fa;border-radius:12px;padding:11px}.engines b{display:block;font-size:14px}.engines span{display:block;font-size:12px;color:#5d6877;margin-top:3px}
+.engines{display:grid;gap:7px}.engines div{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:11px}.engines b{display:block;font-size:14px}.engines span{display:block;font-size:12px;color:#9cafc3;margin-top:3px}
 @media(max-width:500px){.map{height:300px}.daygrid{grid-template-columns:1fr 1fr}.weekrow{grid-template-columns:62px 40px 1fr auto}.weekly{gap:6px}}
+.overallTop{display:flex;align-items:center;justify-content:space-between;gap:10px}.overallTitle{font-size:23px;font-weight:850;margin-top:3px}.overallScore{font-size:42px;font-weight:900}.overallText{font-size:14px;color:#b9c9da;line-height:1.55;margin:8px 0}.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{font-size:11px;background:rgba(255,255,255,.08);border-radius:99px;padding:6px 9px;color:#d8e4f0}
 </style></head>
 <body>
 <header><h1>🌧 大田区 超局地天気</h1><div class="sub">気象庁 高解像度降水ナウキャスト × 独自雨判定　v0.3</div></header>
@@ -41,6 +44,11 @@ button{border:0;border-radius:10px;padding:9px 10px;background:#0b1220;color:#ff
 <div class="arrivalLabel">☔ 雨雲の到達予測</div>
 <div id="arrivalMain">計算中…</div>
 <div id="arrivalSub">大田区の基準地点に雨雲が近づく時間を判定しています</div>
+</section>
+<section class="card overall">
+<div class="overallTop"><div><div class="label">TODAY'S WEATHER SCORE</div><div id="overallTitle" class="overallTitle">総合判定を計算中…</div></div><div id="overallScore" class="overallScore">--</div></div>
+<div id="overallText" class="overallText">短時間・数時間・週間の3エンジンを統合しています。</div>
+<div class="chips"><span id="chipA">⚡ 0〜60分 --</span><span id="chipB">🌧 1〜6時間 --</span><span id="chipC">🌤 明日 --</span></div>
 </section>
 <section class="card"><h2>🌤 明日・明後日</h2>
 <div id="tomorrowGrid" class="daygrid"></div>
@@ -98,6 +106,22 @@ function icon(code){
  if(code===3)return "☁️";
  return "☀️";
 }
+function updateOverall(d){
+ const scoreA=parseInt(document.getElementById("score").textContent)||0;
+ const bVals=(d?.hourly?.precipitation_probability||[]).slice(0,7);
+ const scoreB=bVals.length?Math.max(...bVals):scoreA;
+ const scoreC=Math.round(d?.daily?.precipitation_probability_max?.[1]||0);
+ // Weighted score: near-term gets the strongest weight because this app is optimized for rain now.
+ const total=Math.round(scoreA*.5+scoreB*.3+scoreC*.2);
+ const title=total>=75?"⚠️ 雨に注意":total>=50?"🌂 変わりやすい天気":total>=30?"⛅ 念のため注意":"☀️ 比較的安定";
+ document.getElementById("overallScore").textContent=total;
+ document.getElementById("overallTitle").textContent=title;
+ document.getElementById("chipA").textContent=`⚡ 0〜60分 ${scoreA}%`;
+ document.getElementById("chipB").textContent=`🌧 1〜6時間 ${scoreB}%`;
+ document.getElementById("chipC").textContent=`🌤 明日 ${scoreC}%`;
+ let text=total>=75?"短時間の雨リスクが高めです。外出時は傘を優先してください。":total>=50?"雨の可能性があるため、外出時間帯はレーダーを確認するのがおすすめです。":total>=30?"大きな崩れは見込みにくいものの、局地的な雨には注意してください。":"現時点では大きな雨リスクは低めです。";
+ document.getElementById("overallText").textContent=text;
+}
 function renderDaily(d){
  const t=document.getElementById("tomorrowGrid"), w=document.getElementById("weekly");
  if(!t||!w||!d.daily)return;
@@ -126,7 +150,7 @@ function renderDaily(d){
 }
 
 async function loadWeather(){try{
-const u=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&forecast_days=7&timezone=Asia%2FTokyo`;const d=await fetch(u).then(r=>r.json()),c=d.current,h=d.hourly;renderDaily(d);
+const u=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&forecast_days=7&timezone=Asia%2FTokyo`;const d=await fetch(u).then(r=>r.json()),c=d.current,h=d.hourly;renderDaily(d);updateOverall(d);
 document.getElementById("temp").textContent=Math.round(c.temperature_2m)+"°";document.getElementById("weather").textContent=WMO[c.weather_code]||"天気";document.getElementById("humidity").textContent=Math.round(c.relative_humidity_2m)+"%";document.getElementById("wind").textContent=(c.wind_speed_10m/3.6).toFixed(1)+" m/s";document.getElementById("precip").textContent=(c.precipitation||0).toFixed(1)+" mm";document.getElementById("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
 let idx=h.time.findIndex(t=>new Date(t)>=new Date(Date.now()-1800000));if(idx<0)idx=0;let html="",maxP=0;for(let i=idx;i<idx+6&&i<h.time.length;i++){let p=h.precipitation_probability[i]||0,mm=h.precipitation[i]||0;maxP=Math.max(maxP,p);let dt=new Date(h.time[i]);html+=`<div class="slot"><div class="time">${dt.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</div><div class="rain">${p}%</div><div class="mm">${mm.toFixed(1)}mm</div><div class="bar"><i style="width:${p}%"></i></div></div>`}document.getElementById("timeline").innerHTML=html;
 const rain=[51,53,55,61,63,65,80,81,82,95,96,99].includes(c.weather_code)?35:0;const score=Math.min(100,Math.max(maxP,rain+(c.precipitation>0?45:0)));document.getElementById("score").textContent=Math.round(score)+"%";document.getElementById("advice").textContent=score>=70?"☔ 傘がおすすめ":score>=35?"🌂 折りたたみ傘を検討":"☀️ 今は雨リスク低め";
