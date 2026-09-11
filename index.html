@@ -70,7 +70,6 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  .place{font-size:22px}.temp{font-size:46px}.timeline{grid-template-columns:repeat(3,1fr)}.days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:8px;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.days .day{flex:0 0 112px;scroll-snap-align:start}
  .engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
 }
-button{border:1px solid #cfdceb;background:#fff;color:#23486b;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}button.primary{background:#2f80ed;color:#fff;border-color:#2f80ed}
 </style>
 </head>
 <body>
@@ -133,7 +132,7 @@ button{border:1px solid #cfdceb;background:#fff;color:#23486b;border-radius:12px
   </section>
 
   <section class="card">
-    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button id="gasTest" type="button">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
+    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center"><button id="gasTest" style="border:1px solid #c9d8e8;background:#fff;color:#17446f;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
     <div class="status" id="status"></div>
   </section>
 </div>
@@ -143,6 +142,7 @@ button{border:1px solid #cfdceb;background:#fff;color:#23486b;border-radius:12px
 const GAS_URL="https://script.google.com/macros/s/AKfcybyhdHkl5VcmZaZniF7s2mytETgtY-KAha41KWGhLl3cis5o-iY2XKsKYE5Z11v76SLlpg/exec";
 const LAT=35.5613, LON=139.7161;
 let forecast=null, frames=[], map, rainLayer, timer=null;
+let gasBusy=false, gasScript=null, gasTimer=null, gasRequestId=0;
 const $=id=>document.getElementById(id);
 function pct(v){return v==null||isNaN(v)?"--":Math.round(Number(v))+"%"}
 function timeHM(s){try{return new Date(s).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}catch(e){return "--:--"}}
@@ -150,10 +150,11 @@ function wxIcon(code){code=Number(code);if(code===0)return"☀️";if(code<=3)re
 function wxText(code){code=Number(code);if(code===0)return"晴れ";if(code<=3)return"晴れ時々くもり";if(code<=48)return"くもり";if(code<=67)return"雨";if(code<=77)return"雪";if(code<=82)return"にわか雨";return"雷雨"}
 
 function normalizeGAS(d){
-  if(!d) throw new Error('空のデータ');
+  if(!d) throw new Error('空のGASデータ');
+  if(d.ok===false) throw new Error(d.error||'GAS APIエラー');
   const hourly=(d.hourly||[]).map(x=>({
     time:x.time||x.target_time,
-    precipitation_probability:Number(x.precipitation_probability ?? (x.learned_probability!=null ? x.learned_probability*100 : null) ?? x.rain_probability ?? 0),
+    precipitation_probability:Number(x.precipitation_probability ?? (x.learned_probability!=null?Number(x.learned_probability)*100:null) ?? x.rain_probability ?? 0),
     precipitation:Number(x.precipitation ?? x.precipitation_mm ?? 0),
     temperature_2m:Number(x.temperature_2m ?? x.temperature_c ?? 0),
     relative_humidity_2m:Number(x.relative_humidity_2m ?? x.humidity_pct ?? 0),
@@ -161,7 +162,8 @@ function normalizeGAS(d){
     weather_code:Number(x.weather_code ?? 0)
   }));
   const daily=(d.daily||[]).map(x=>({
-    time:x.time||x.date, weather_code:Number(x.weather_code??0),
+    time:x.time||x.date,
+    weather_code:Number(x.weather_code??0),
     temperature_2m_max:Number(x.temperature_2m_max ?? x.max_c ?? 0),
     temperature_2m_min:Number(x.temperature_2m_min ?? x.min_c ?? 0),
     precipitation_sum:Number(x.precipitation_sum ?? x.precipitation_mm ?? 0),
@@ -169,63 +171,61 @@ function normalizeGAS(d){
     wind_speed_10m_max:Number(x.wind_speed_10m_max ?? x.wind_kmh ?? 0)
   }));
   const c=d.current||{};
-  return {current:c,hourly,daily,learning_bias:d.learning_bias??0,source:'GAS独自予報'};
+  return {current:c,hourly,daily,learning_bias:Number(d.learning_bias??0),source:'GAS独自予報',generated_at:d.generated_at||''};
 }
 
-/* GitHub Pages → GAS JSONP
-   固定callbackを先にwindowへ登録し、script.onerrorは失敗判定に使わない。
-   Apps Script Content Serviceのリダイレクトを考慮し、callback実行または25秒経過だけで判定する。 */
+// Apps Script Content Serviceはリダイレクトされるため、script.onerrorでは失敗判定しない。
+// 固定callbackを1本だけ用意し、callback実行またはタイムアウトで完了を判断する。
 let gasPending=null;
-window.otaWeatherCallback=function(payload){
+function otaWeatherCallback(payload){
   const p=gasPending;
-  if(!p)return;
+  if(!p) return;
   gasPending=null;
   clearTimeout(p.timer);
-  p.script.remove();
-  if(payload&&payload.ok===false){p.reject(new Error(payload.error||'GAS APIエラー'));return;}
-  p.resolve(payload||null);
-};
+  if(gasScript){gasScript.remove();gasScript=null;}
+  gasBusy=false;
+  if(payload&&payload.ok===false) p.reject(new Error(payload.error||'GAS APIエラー'));
+  else p.resolve(payload||null);
+}
 function getGAS(action='forecast'){
+  if(gasPending) return Promise.reject(new Error('GAS通信が重複しています'));
   return new Promise((resolve,reject)=>{
-    if(gasPending){reject(new Error('GAS通信中です'));return;}
-    const script=document.createElement('script');
-    const p={script,resolve,reject,timer:null};
+    gasBusy=true;
+    const id=++gasRequestId;
+    const s=document.createElement('script');
+    gasScript=s;
+    const p={resolve,reject,timer:null,id};
     gasPending=p;
     p.timer=setTimeout(()=>{
       if(gasPending!==p)return;
       gasPending=null;
-      script.remove();
+      gasBusy=false;
+      if(gasScript){gasScript.remove();gasScript=null;}
       reject(new Error('GAS応答タイムアウト（25秒）'));
     },25000);
-    script.async=true;
-    script.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback=otaWeatherCallback&_='+Date.now();
-    document.head.appendChild(script);
+    s.async=true;
+    s.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback=otaWeatherCallback&_='+Date.now()+'_'+id;
+    document.head.appendChild(s);
   });
 }
 
-async function getDirect(){
-  const url='https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+'&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&forecast_days=7&timezone=Asia%2FTokyo';
-  const r=await fetch(url,{cache:'no-store'});
-  if(!r.ok) throw new Error('Open-Meteo HTTP '+r.status);
-  const d=await r.json();
-  const h=[]; for(let i=0;i<d.hourly.time.length;i++) h.push({time:d.hourly.time[i],precipitation_probability:Number(d.hourly.precipitation_probability[i]??0),precipitation:Number(d.hourly.precipitation[i]??0),temperature_2m:Number(d.hourly.temperature_2m[i]??0),relative_humidity_2m:Number(d.hourly.relative_humidity_2m[i]??0),wind_speed_10m:Number(d.hourly.wind_speed_10m[i]??0),weather_code:Number(d.hourly.weather_code[i]??0)});
-  const days=[]; for(let i=0;i<d.daily.time.length;i++) days.push({time:d.daily.time[i],weather_code:Number(d.daily.weather_code[i]??0),temperature_2m_max:Number(d.daily.temperature_2m_max[i]??0),temperature_2m_min:Number(d.daily.temperature_2m_min[i]??0),precipitation_sum:Number(d.daily.precipitation_sum[i]??0),precipitation_probability_max:Number(d.daily.precipitation_probability_max[i]??0),wind_speed_10m_max:Number(d.daily.wind_speed_10m_max[i]??0)});
-  return {current:d.current||{},hourly:h,daily:days,learning_bias:0,source:'Open-Meteo直接取得'};
+async function getGASForecast(){
+  const d=await getGAS('forecast');
+  return normalizeGAS(d);
 }
 
 async function load(){
-  $('status').textContent='GASから予報データを取得中…';
-  $('updated').textContent='取得中';
+  $('status').textContent='GAS予報データを確認中…';
+  $('updated').textContent='GAS接続中…';
   try{
-    const raw=await getGAS('forecast');
-    if(!raw||raw.ok!==true) throw new Error(raw?.error||'GASから正常な応答がありません');
-    forecast=normalizeGAS(raw);
+    forecast=await getGASForecast();
     render();
     $('status').textContent='● GAS接続成功 / GAS_LEARNED / 最新データを表示中';
   }catch(e){
     console.error('GAS取得失敗',e);
     $('status').textContent='GAS接続失敗：'+(e.message||e);
     $('updated').textContent='GAS取得エラー';
+    return;
   }
 }
 
@@ -367,20 +367,22 @@ $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
 $('gasTest').onclick=async()=>{
+  if(gasBusy){$('status').textContent='GAS通信中です…';return}
   $('status').textContent='GAS接続テスト中…';
   try{
-    const raw=await getGAS('forecast');
-    if(!raw||raw.ok!==true)throw new Error(raw?.error||'GASから正常な応答がありません');
-    $('status').textContent='● GAS接続OK / '+(raw.engine||'GAS')+' を受信しました';
+    const d=await getGAS('latest');
+    const rows=Array.isArray(d?.learning?.rows)?d.learning.rows.length:0;
+    $('status').textContent='● GAS接続OK / latest受信 / 学習行 '+rows+'件';
   }catch(e){$('status').textContent='GAS接続テスト失敗：'+(e.message||e)}
 };
 $('collect').onclick=async()=>{
+  if(gasBusy){$('status').textContent='GAS通信中です…';return}
   $('status').textContent='学習データ更新中…';
   try{
-    const raw=await getGAS('collect');
-    if(!raw||raw.ok!==true)throw new Error(raw?.error||'GASから正常な応答がありません');
-    $('status').textContent='● 学習データを更新しました（'+(raw.saved??0)+'件）';
-    setTimeout(load,300);
+    const r=await getGAS('collect');
+    if(r&&r.ok===false)throw new Error(r.error||'GAS APIエラー');
+    $('status').textContent='● 学習データ更新完了。予報を再取得中…';
+    await load();
   }catch(e){$('status').textContent='学習データ更新に失敗：'+(e.message||e)}
 };
 setupMap();load();
