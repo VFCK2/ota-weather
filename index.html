@@ -49,7 +49,7 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 .timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
 .timebox{border:1px solid var(--line);border-radius:13px;padding:9px 6px;text-align:center;background:#fff}
 .timebox .t{font-size:12px;color:#46627f;font-weight:700}.timebox .p{font-size:20px;font-weight:900;margin:4px 0}.timebox .r{font-size:11px;color:#46627f;font-weight:600}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
 .day{border:1px solid var(--line);border-radius:13px;padding:10px 5px;text-align:center;background:#fff;min-width:0}
 .day .d{font-size:12px;font-weight:900;color:#385773}.day .ico{font-size:24px;margin:5px 0}.day .t{font-size:13px;font-weight:900}.day .rain{font-size:11px;color:#46627f;margin-top:4px;font-weight:600}
 .mapCard{padding:12px}.mapTop{display:flex;justify-content:space-between;align-items:center;padding:3px 5px 10px}.mapTop b{font-size:15px}.mapTop span{font-size:11px;color:#536b84;font-weight:600}
@@ -68,7 +68,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 @media(max-width:700px){
  .app{padding:12px 10px 30px}.hero{grid-template-columns:1fr}.card{padding:14px;border-radius:17px}
  .place{font-size:22px}.temp{font-size:46px}.timeline{grid-template-columns:repeat(3,1fr)}.days{grid-template-columns:repeat(4,1fr)}
- .days .day:nth-child(n+5){display:none}.engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
+ .engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
 }
 </style>
 </head>
@@ -245,9 +245,30 @@ async function setupMap(){
   L.marker([LAT,LON]).addTo(map).bindPopup('大田区').openPopup();
   await loadFrames();
 }
-async function loadFrames(){try{const rr=await fetch('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json?_='+Date.now(),{cache:'no-store'});if(!rr.ok)throw new Error('JMA '+rr.status);const arr=await rr.json();frames=arr.slice(0,13).reverse();$('slider').max=Math.max(0,frames.length-1);showFrame(frames.length-1)}catch(e){$('mapTime').textContent='取得不可'}}
-function jmaTimeHM(v){try{const s=String(v||'');if(s.length<12)return'--:--';const d=new Date(Date.UTC(Number(s.slice(0,4)),Number(s.slice(4,6))-1,Number(s.slice(6,8)),Number(s.slice(8,10)),Number(s.slice(10,12)),0));return d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'})}catch(e){return'--:--'}}
-function showFrame(i){if(!frames[i])return;const f=frames[i];const url=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;if(rainLayer)map.removeLayer(rainLayer);rainLayer=L.tileLayer(url,{opacity:.62,tileSize:256,maxZoom:12,minZoom:4,zIndex:500,errorTileUrl:''}).addTo(map);$('mapTime').textContent=jmaTimeHM(f.validtime)}
+async function loadFrames(){
+  try{
+    const [r1,r2]=await Promise.all([
+      fetch('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json?_='+Date.now(),{cache:'no-store'}),
+      fetch('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json?_='+Date.now(),{cache:'no-store'})
+    ]);
+    if(!r1.ok||!r2.ok) throw new Error('JMA '+(!r1.ok?r1.status:r2.status));
+    const past=await r1.json();
+    const future=await r2.json();
+    const now=Date.now();
+    const pastFrames=past.filter(x=>Date.parse(x.validtime.slice(0,4)+'-'+x.validtime.slice(4,6)+'-'+x.validtime.slice(6,8)+'T'+x.validtime.slice(8,10)+':'+x.validtime.slice(10,12)+':00+09:00')<=now).slice(0,6);
+    const futureFrames=future.slice().sort((a,b)=>String(a.validtime).localeCompare(String(b.validtime))).filter(x=>x.validtime).slice(0,13);
+    const all=[...pastFrames,...futureFrames].sort((a,b)=>String(a.validtime).localeCompare(String(b.validtime)));
+    const seen=new Set(); frames=all.filter(x=>{const k=x.basetime+'_'+x.validtime;if(seen.has(k))return false;seen.add(k);return true});
+    $('slider').max=Math.max(0,frames.length-1);
+    let initial=0, best=Infinity;
+    frames.forEach((f,i)=>{const t=jmaDate(f.validtime)?.getTime()??0;const diff=Math.abs(t-now);if(diff<best){best=diff;initial=i}});
+    $('slider').value=initial;
+    showFrame(initial);
+  }catch(e){console.error(e);$('mapTime').textContent='雨雲データ取得不可'}
+}
+function jmaDate(v){try{const s=String(v||'');if(s.length<12)return null;return new Date(Date.UTC(Number(s.slice(0,4)),Number(s.slice(4,6))-1,Number(s.slice(6,8)),Number(s.slice(8,10)),Number(s.slice(10,12)),0))}catch(e){return null}}
+function jmaTimeHM(v){const d=jmaDate(v);return d?d.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}):'--:--'}
+function showFrame(i){if(!frames[i])return;const f=frames[i];const url=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;if(rainLayer)map.removeLayer(rainLayer);rainLayer=L.tileLayer(url,{opacity:.78,tileSize:256,minZoom:3,maxZoom:10,maxNativeZoom:10,zIndex:500,attribution:'気象データ © Japan Meteorological Agency'}).addTo(map);$('mapTime').textContent=jmaTimeHM(f.validtime)}
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
