@@ -132,7 +132,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   </section>
 
   <section class="card">
-    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><button class="primary" id="collect">学習データ更新</button></div>
+    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="primary" id="gasTest">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
     <div class="status" id="status"></div>
   </section>
 </div>
@@ -212,22 +212,35 @@ async function getDirect(){
 }
 
 async function load(){
-  $('status').textContent='天気データを取得中…';
-  $('updated').textContent='取得中';
+  $('status').textContent='GASから天気データを取得中…';
+  $('updated').textContent='GAS取得中';
   try{
     forecast=await getGASForecast();
-  }catch(gasErr){
-    console.warn('GAS取得失敗',gasErr);
-    try{ forecast=await getDirect(); }
-    catch(directErr){
-      console.error('直接取得も失敗',directErr);
-      $('status').textContent='天気データを取得できませんでした。GAS: '+gasErr.message+' / 直接: '+directErr.message;
-      $('updated').textContent='データ取得エラー';
-      return;
-    }
+    render();
+    $('status').textContent='● GAS接続成功 / GAS独自予報（GAS_LEARNED）を表示中';
+  }catch(e){
+    console.error('GAS取得失敗',e);
+    forecast=null;
+    $('updated').textContent='GAS接続エラー';
+    $('status').textContent='⚠ GASから取得できませんでした：'+e.message+'　※Open-Meteoへの自動切替は行いません';
   }
-  render();
-  $('status').textContent='● '+forecast.source+' / GASから取得 / 最新データを表示中';
+}
+
+async function testGAS(){
+  const b=$('gasTest');
+  b.disabled=true;
+  $('status').textContent='GAS接続をテスト中…';
+  try{
+    const d=await getGAS('forecast');
+    if(!d || d.ok===false) throw new Error(d?.error||'GASエラー');
+    const engine=d.engine||'不明';
+    const bias=Number(d.learning_bias??0);
+    $('status').textContent='✅ GAS接続成功 / engine='+engine+' / 学習補正='+bias.toFixed(3);
+    $('updated').textContent='GAS接続OK';
+  }catch(e){
+    $('status').textContent='❌ GAS接続失敗：'+e.message;
+    $('updated').textContent='GAS接続エラー';
+  }finally{b.disabled=false;}
 }
 
 function render(){
@@ -367,20 +380,21 @@ function showFrame(i){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
+$('gasTest').onclick=testGAS;
 $('collect').onclick=async()=>{
   const b=$('collect');
   b.disabled=true;
-  $('status').textContent='予報を保存・採点中…';
+  $('status').textContent='GASで予報を保存・採点中…';
   try{
     const saved=await getGAS('collect');
     if(!saved || saved.ok===false) throw new Error(saved?.error||'予報保存エラー');
-    $('status').textContent='予報を保存しました。過去予報を採点中…';
+    $('status').textContent='GASで予報を保存しました。過去予報を採点中…';
     const scored=await getGAS('score');
     if(!scored || scored.ok===false) throw new Error(scored?.error||'採点エラー');
-    $('status').textContent='学習データを更新しました。採点 '+(scored.scored||0)+'件 / 実測 '+(scored.observations||0)+'件';
+    $('status').textContent='✅ GASで学習データを更新しました。採点 '+(scored.scored||0)+'件 / 実測 '+(scored.observations||0)+'件';
     await load();
   }catch(e){
-    $('status').textContent='学習データ更新に失敗: '+e.message;
+    $('status').textContent='❌ GAS学習データ更新に失敗：'+e.message;
   }finally{ b.disabled=false; }
 };
 setupMap();load();
