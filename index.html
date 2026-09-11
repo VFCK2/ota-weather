@@ -63,7 +63,8 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 .engine{background:#f7f9fc;border:1px solid var(--line);border-radius:13px;padding:11px}
 .engine b{font-size:13px}.engine span{display:block;font-size:11px;color:#536b84;margin-top:4px;line-height:1.5}
 .learning{display:flex;justify-content:space-between;gap:12px;align-items:center}.learnText b{display:block;font-size:14px}.learnText span{font-size:12px;color:#536b84;font-weight:600}
-button.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:900}
+button.secondary{border:1px solid #d7e2ef;background:#fff;color:#1f4f78;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer}.secondary:disabled{opacity:.55}
+.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:900}
 .status{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:700px){
  .app{padding:12px 10px 30px}.hero{grid-template-columns:1fr}.card{padding:14px;border-radius:17px}
@@ -132,7 +133,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   </section>
 
   <section class="card">
-    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><button class="primary" id="collect">学習データ更新</button></div>
+    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><button class="secondary" id="gasTest" type="button">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
     <div class="status" id="status"></div>
   </section>
 </div>
@@ -177,28 +178,35 @@ function getGAS(action='forecast'){
     const cb='otaGasCb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
     let settled=false;
+    let timer=null;
+
     const cleanup=()=>{
+      if(timer){clearTimeout(timer);timer=null;}
       script.remove();
       try{delete window[cb]}catch(e){window[cb]=undefined}
     };
     const finish=(fn,value)=>{
       if(settled)return;
       settled=true;
-      clearTimeout(timer);
       cleanup();
       fn(value);
     };
+
     window[cb]=(payload)=>{
-      if(!payload){finish(reject,new Error('GASから空の応答')) ;return}
+      if(!payload){finish(reject,new Error('GASから空の応答'));return}
       if(payload.ok===false){finish(reject,new Error(payload.error||'GAS APIエラー'));return}
       finish(resolve,payload);
     };
-    script.onerror=()=>finish(reject,new Error('GASスクリプト読み込みエラー'));
-    const q='?action='+encodeURIComponent(action)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
-    script.src=GAS_URL+q;
+
+    // Google Apps Scriptはscript.google.comからgoogleusercontent.comへリダイレクトするため、
+    // script要素での読み込みを使う。callback名はURLエンコードしない。
+    const q='?action='+encodeURIComponent(action)+'&callback='+cb+'&_='+Date.now();
     script.async=true;
+    script.src=GAS_URL+q;
+
+    timer=setTimeout(()=>finish(reject,new Error('GAS応答タイムアウト（15秒）')),15000);
+    script.onerror=()=>finish(reject,new Error('GASスクリプト読み込みエラー。GAS URLまたはWebアプリ公開設定を確認してください'));
     document.head.appendChild(script);
-    const timer=setTimeout(()=>finish(reject,new Error('GAS応答タイムアウト（15秒）')),15000);
   });
 }
 
@@ -367,6 +375,18 @@ $('collect').onclick=async()=>{
   }finally{
     $('collect').disabled=false;
   }
+};
+$('gasTest').onclick=async()=>{
+  const b=$('gasTest');
+  b.disabled=true;
+  $('status').textContent='GAS接続をテスト中…';
+  try{
+    const d=await getGAS('forecast');
+    if(!d || d.ok===false) throw new Error(d?.error||'GAS応答が不正です');
+    $('status').textContent='● GAS接続OK / GAS_LEARNED を受信しました';
+  }catch(e){
+    $('status').textContent='GAS接続失敗：'+(e.message||e);
+  }finally{b.disabled=false;}
 };
 setupMap();load();
 </script>
