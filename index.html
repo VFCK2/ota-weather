@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報1.1</title>
+<title>OTA WEATHER | 大田区独自予報</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -74,7 +74,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 </head>
 <body>
 <div class="app">
-  <div class="header"><div class="brand"><b>OTA</b> WEATHER / INDEPENDENT FORECAST</div><div class="updated" id="updated">読み込み中</div></div>
+  <div class="header"><div class="brand"><b>OTA</b> WEATHER / INDEPENDENT FORECAST</div><div class="updated" id="updated">GAS接続中…</div></div>
 
   <div class="hero">
     <section class="card now">
@@ -152,12 +152,25 @@ function wxText(code){if(code==0)return"晴れ";if(code<=3)return"晴れ時々�
 async function load(){
   $("status").textContent="予報データを取得中…";
   try{
-    const r=await fetch(GAS_URL+"?action=forecast&_= "+Date.now());
-    forecast=await r.json();
+    const url=GAS_URL+"?action=forecast&_="+Date.now();
+    const r=await fetch(url,{method:"GET",cache:"no-store"});
+    const text=await r.text();
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    let data;
+    try{ data=JSON.parse(text); }catch(e){
+      throw new Error("GASからJSON以外の応答が返りました");
+    }
+    if(data.error) throw new Error(data.error);
+    if(!data.current && !data.hourly && !data.daily){
+      throw new Error("予報データが空です");
+    }
+    forecast=data;
     render();
     $("status").textContent="最新データを表示しています";
   }catch(e){
-    $("status").textContent="データ取得に失敗しました。GASの公開設定を確認してください。";
+    console.error("forecast load error:",e);
+    $("status").textContent="予報データを取得できませんでした: "+e.message;
+    $("updated").textContent="データ取得エラー";
   }
 }
 function render(){
@@ -193,14 +206,16 @@ function render(){
   $("learning").textContent=forecast.learning_bias!=null?`学習補正 ${Number(forecast.learning_bias).toFixed(3)}`:"学習データを確認中";
 }
 async function setupMap(){
-  map=L.map("map",{zoomControl:true,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false}).setView([LAT,LON],11);
+  map=L.map("map",{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:true}).setView([LAT,LON],11);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(map);
   L.marker([LAT,LON]).addTo(map).bindPopup("大田区").openPopup();
   await loadFrames();
 }
 async function loadFrames(){
   try{
-    const arr=await fetch("https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json?_="+Date.now()).then(r=>r.json());
+    const rr=await fetch("https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json?_="+Date.now(),{cache:"no-store"});
+    if(!rr.ok) throw new Error("JMA "+rr.status);
+    const arr=await rr.json();
     frames=arr.slice(0,13).reverse();
     $("slider").max=Math.max(0,frames.length-1);
     showFrame(frames.length-1);
@@ -212,7 +227,12 @@ function showFrame(i){
   const url=`https://www.jma.go.jp/bosai/jmatile/data/nowc/${f.basetime}/none/${f.validtime}/surf/hrpns/{z}/{x}/{y}.png`;
   if(rainLayer)map.removeLayer(rainLayer);
   rainLayer=L.tileLayer(url,{opacity:.62,tileSize:256,maxZoom:12,minZoom:4,zIndex:500,errorTileUrl:""}).addTo(map);
-  $("mapTime").textContent=timeHM(f.validtime.slice(0,4)+"-"+f.validtime.slice(4,6)+"-"+f.validtime.slice(6,8)+"T"+f.validtime.slice(8,10)+":"+f.validtime.slice(10,12)+":00+09:00");
+  const vt=String(f.validtime||"");
+  if(vt.length>=12){
+    $("mapTime").textContent=vt.slice(8,10)+":"+vt.slice(10,12);
+  }else{
+    $("mapTime").textContent="--:--";
+  }
 }
 $("slider").addEventListener("input",e=>showFrame(Number(e.target.value)));
 $("latest").onclick=()=>{const i=frames.length-1;$("slider").value=i;showFrame(i)}
@@ -223,8 +243,19 @@ $("play").onclick=()=>{
 }
 $("collect").onclick=async()=>{
   $("status").textContent="学習データ更新中…";
-  try{await fetch(GAS_URL+"?action=collect&_= "+Date.now());$("status").textContent="学習データを更新しました。";load()}
-  catch(e){$("status").textContent="更新に失敗しました。"}
+  try{
+    const r=await fetch(GAS_URL+"?action=collect&_="+Date.now(),{cache:"no-store"});
+    const text=await r.text();
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    let data;
+    try{data=JSON.parse(text)}catch(e){throw new Error("GASの応答を確認できません")}
+    if(data.error) throw new Error(data.error);
+    $("status").textContent="学習データを更新しました。";
+    load();
+  }catch(e){
+    console.error("collect error:",e);
+    $("status").textContent="学習データ更新に失敗しました: "+e.message;
+  }
 }
 setupMap();load();
 </script>
