@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報7</title>
+<title>OTA WEATHER | 大田区独自予報8</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -66,10 +66,46 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 button.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:900}
 .status{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:700px){
- .app{padding:12px 10px 30px}.hero{grid-template-columns:1fr}.card{padding:14px;border-radius:17px}
- .place{font-size:23px}.temp{font-size:50px}.todayIcon{font-size:60px}.todaySummary{font-size:20px}.todayTemp b{font-size:31px}.todayTemp b:last-of-type{font-size:26px}
- .timeline{grid-template-columns:repeat(3,1fr);gap:8px}.days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:9px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.days .day{flex:0 0 132px;scroll-snap-align:start}
- .timebox{min-height:128px}.timebox .wx{font-size:28px}.timebox .p{font-size:22px}
+ .app{padding:12px 10px 30px}.card{padding:14px;border-radius:17px}
+
+ /* スマホ：現在と今日を横一列 */
+ .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:stretch}
+ .hero>.card{min-width:0;margin-bottom:0;padding:12px 10px;border-radius:15px}
+ .place{font-size:20px;margin:3px 0 9px}
+ .currentRow{gap:7px}
+ .weatherIcon{font-size:39px}
+ .temp{font-size:39px}
+ .temp small{font-size:15px}
+ .summary{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .metrics{grid-template-columns:1fr;gap:5px;margin-top:9px}
+ .metric{padding:6px 8px;display:flex;align-items:center;justify-content:space-between}
+ .metric span{font-size:11px}.metric b{font-size:15px}
+
+ .todayHead{display:block}
+ .todayLabel{font-size:19px}
+ .todayBadge{display:none}
+ .todayMain{gap:7px;margin:10px 0 9px}
+ .todayIcon{font-size:43px}
+ .todaySummary{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .todayTemp{gap:4px}
+ .todayTemp b{font-size:25px}
+ .todayTemp b:last-of-type{font-size:22px}
+ .todayTemp span{font-size:9px;margin-right:2px}
+ .todayDetails{grid-template-columns:1fr;gap:5px}
+ .todayDetails div{padding:6px 8px}
+ .todayDetails span{font-size:10px}
+ .todayDetails b{font-size:15px}
+
+ /* スマホ：60分も横スクロール */
+ .timeline{display:flex;grid-template-columns:none;gap:8px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 9px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;scrollbar-width:none}
+ .timeline::-webkit-scrollbar{display:none}
+ .timeline .timebox{flex:0 0 112px;scroll-snap-align:start;min-height:128px}
+ .timebox .wx{font-size:30px}
+ .timebox .p{font-size:22px}
+
+ /* 週間予報 */
+ .days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:9px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+ .days .day{flex:0 0 132px;scroll-snap-align:start}
  .engines{grid-template-columns:1fr}.mapCard{padding:9px}#map{height:330px}
 }
 
