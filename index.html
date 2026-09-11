@@ -1,41 +1,41 @@
 <!doctype html>
 <html lang="ja"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220"><title>大田区 超局地天気 v0.6</title>
+<meta name="theme-color" content="#0b1220"><title>大田区 超局地天気 v0.7</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#07111f;color:#eef5ff;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
-body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 20% 0%,#12345a 0,transparent 38%),radial-gradient(circle at 90% 20%,#17324b 0,transparent 34%),#07111f}
-header{background:rgba(5,13,25,.88)!important;border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(16px)}
+*{box-sizing:border-box}body{margin:0;background:#eef5fb;color:#172334;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+header{background:linear-gradient(135deg,#1877d2,#49a7ef)!important;color:#fff;border-bottom:0;box-shadow:0 5px 18px #1b73b525}
 header{background:#0b1220;color:#fff;padding:16px}.sub{font-size:13px;opacity:.78}h1{font-size:21px;margin:0 0 3px}
-main{max-width:760px;margin:auto;padding:12px 10px 36px}.card{background:rgba(16,28,45,.82);border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 10px 30px #0008;backdrop-filter:blur(14px)}
-.now{display:grid;grid-template-columns:1fr auto;align-items:center}.label{font-size:13px;font-weight:650;color:#aab9cc} .temp{font-size:48px;font-weight:800}.weather{font-size:20px;font-weight:750;color:#f5f9ff}.updated{font-size:12px;color:#91a2b8}
-.score{font-size:40px;font-weight:800}.advice{font-size:14px;font-weight:750;color:#d9e7f7}h2{font-size:19px;color:#f3f7fc;margin:0 0 10px}
+main{max-width:760px;margin:auto;padding:12px 10px 36px}.card{background:#fff;border:1px solid #dfe8f1;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 5px 18px #183b5a12}
+.now{display:grid;grid-template-columns:1fr auto;align-items:center}.label{font-size:13px;font-weight:650;color:#64748b} .temp{font-size:48px;font-weight:800}.weather{font-size:20px;font-weight:750;color:#1d2b3b}.updated{font-size:12px;color:#7b8797}
+.score{font-size:40px;font-weight:800}.advice{font-size:14px;font-weight:750;color:#25364a}h2{font-size:19px;color:#172334;margin:0 0 10px}
 .map{height:330px;border-radius:14px;overflow:hidden;background:#dfe7ef;touch-action:pan-y}.mapbar,.controls{display:flex;gap:6px;align-items:center;margin-top:8px}
-button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px;background:#182b43;color:#fff;font-weight:750}.secondary{background:rgba(255,255,255,.08);color:#e4edf8}
+button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px;background:#1677d2;color:#fff;font-weight:750}.secondary{background:#edf3f8;color:#31445a}
 .mapbar span,.controls span{font-size:14px;color:#566274}.mapbar span{margin-left:auto}.controls input{flex:1}
 .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#4f5b6b}.legend i{width:10px;height:10px;display:inline-block;border-radius:3px}
-.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.slot{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:10px 3px;text-align:center}
-.time{font-size:15px;font-weight:750;color:#dbe6f3}.rain{font-size:22px;font-weight:800;margin:4px 0}.mm{font-size:13px;color:#9cafc3}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);padding:13px;border-radius:13px}.metric b{display:block;font-size:23px;margin-top:3px}
-.note,.status{font-size:13px;color:#9cafc3;line-height:1.6}.status{text-align:center;margin-top:6px}
-.arrival{background:linear-gradient(135deg,rgba(22,57,91,.95),rgba(11,27,46,.95));color:#fff;text-align:center;padding:20px 14px;border-color:rgba(105,180,255,.22)}
-.arrivalLabel{font-size:16px;opacity:.82}.arrival #arrivalMain{font-size:36px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:13px;opacity:.72;line-height:1.5}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.slot{background:#f4f8fc;border:1px solid #e5edf5;border-radius:13px;padding:10px 3px;text-align:center}
+.time{font-size:15px;font-weight:750;color:#34445a}.rain{font-size:22px;font-weight:800;margin:4px 0}.mm{font-size:13px;color:#718096}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:#f4f8fc;border:1px solid #e5edf5;padding:13px;border-radius:13px}.metric b{display:block;font-size:23px;margin-top:3px}
+.note,.status{font-size:13px;color:#65758a;line-height:1.6}.status{text-align:center;margin-top:6px}
+.arrival{background:linear-gradient(135deg,#e9f6ff,#d9efff);color:#12304b;text-align:center;padding:20px 14px;border-color:#b9ddf6}
+.arrivalLabel{font-size:16px;color:#35627f;font-weight:700}.arrival #arrivalMain{font-size:36px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:13px;color:#527089;line-height:1.5}
 .leaflet-control-attribution{font-size:8px!important}
 @media(max-width:500px){.map{height:340px}.timeline{grid-template-columns:repeat(3,1fr)}}
 
 
 .daygrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.daycard{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:13px}
-.daytitle{font-size:15px;font-weight:800}.dayicon{font-size:31px;margin:4px 0}.daytemp{font-size:22px;font-weight:800}.dayrain{font-size:14px;margin-top:5px}.daydetail{font-size:12px;color:#9cafc3;margin-top:5px;line-height:1.5}
-.weekly{display:grid;gap:7px}.weekrow{display:grid;grid-template-columns:70px 46px 1fr auto;align-items:center;gap:8px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px}
+.daycard{background:#f4f8fc;border:1px solid #e4edf5;border-radius:14px;padding:13px}
+.daytitle{font-size:15px;font-weight:800}.dayicon{font-size:31px;margin:4px 0}.daytemp{font-size:22px;font-weight:800}.dayrain{font-size:14px;margin-top:5px}.daydetail{font-size:12px;color:#64748b;margin-top:5px;line-height:1.5}
+.weekly{display:grid;gap:7px}.weekrow{display:grid;grid-template-columns:70px 46px 1fr auto;align-items:center;gap:8px;background:#f4f8fc;border:1px solid #e4edf5;border-radius:12px;padding:10px}
 .weekday{font-size:14px;font-weight:750}.weekicon{font-size:24px;text-align:center}.weektemp{font-size:14px;font-weight:750}.weekrain{font-size:13px;font-weight:700;text-align:right}
-.engines{display:grid;gap:7px}.engines div{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:11px}.engines b{display:block;font-size:14px}.engines span{display:block;font-size:12px;color:#9cafc3;margin-top:3px}
+.engines{display:grid;gap:7px}.engines div{background:#f4f8fc;border:1px solid #e4edf5;border-radius:12px;padding:11px}.engines b{display:block;font-size:14px}.engines span{display:block;font-size:12px;color:#9cafc3;margin-top:3px}
 @media(max-width:500px){.map{height:300px}.daygrid{grid-template-columns:1fr 1fr}.weekrow{grid-template-columns:62px 40px 1fr auto}.weekly{gap:6px}}
 .overallTop{display:flex;align-items:center;justify-content:space-between;gap:10px}.overallTitle{font-size:23px;font-weight:850;margin-top:3px}.overallScore{font-size:42px;font-weight:900}.overallText{font-size:14px;color:#b9c9da;line-height:1.55;margin:8px 0}.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{font-size:11px;background:rgba(255,255,255,.08);border-radius:99px;padding:6px 9px;color:#d8e4f0}
+.learning{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.learning div{background:#f4f8fc;border:1px solid #e4edf5;border-radius:12px;padding:11px;text-align:center}.learning b{display:block;font-size:21px}.learning span{display:block;font-size:11px;color:#64748b;margin-top:3px}
 </style></head>
 <body>
-<header><h1>🌧 大田区 超局地天気</h1><div class="sub">気象庁 高解像度降水ナウキャスト × 独自雨判定　v0.3</div></header>
+<header><h1>🌧 大田区 超局地天気</h1><div class="sub">気象庁 高解像度降水ナウキャスト × 独自雨判定　v0.7</div></header>
 <main>
 <section class="card now"><div><div class="label">大田区・現在</div><div id="temp" class="temp">--°</div><div id="weather" class="weather">読み込み中…</div><div id="updated" class="updated"></div></div>
 <div style="text-align:right"><div class="label">雨リスク</div><div id="score" class="score">--%</div><div id="advice" class="advice">判定中</div></div></section>
@@ -46,8 +46,8 @@ button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px
 <div id="arrivalSub">大田区の基準地点に雨雲が近づく時間を判定しています</div>
 </section>
 <section class="card overall">
-<div class="overallTop"><div><div class="label">TODAY'S WEATHER SCORE</div><div id="overallTitle" class="overallTitle">総合判定を計算中…</div></div><div id="overallScore" class="overallScore">--</div></div>
-<div id="overallText" class="overallText">短時間・数時間・週間の3エンジンを統合しています。</div>
+<div class="overallTop"><div><div class="label">OTA INDEPENDENT FORECAST</div><div id="overallTitle" class="overallTitle">大田区独自予報を計算中…</div></div><div id="overallScore" class="overallScore">--</div></div>
+<div id="overallText" class="overallText">観測・短時間予報・中期予報を統合し、大田区向けに補正しています。</div>
 <div class="chips"><span id="chipA">⚡ 0〜60分 --</span><span id="chipB">🌧 1〜6時間 --</span><span id="chipC">🌤 明日 --</span></div>
 </section>
 <section class="card"><h2>🌤 明日・明後日</h2>
@@ -58,13 +58,7 @@ button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px
 <div id="weekly" class="weekly"></div>
 </section>
 
-<section class="card"><h2>🧠 予報エンジン</h2>
-<div class="engines">
-<div><b>⚡ エンジンA</b><span>0〜60分：高解像度降水ナウキャスト＋実況</span></div>
-<div><b>🌧 エンジンB</b><span>1〜6時間：降水短時間予報系の短時間判断</span></div>
-<div><b>🌤 エンジンC</b><span>明日〜7日：日別予報を使った中期判断</span></div>
-</div>
-</section>
+
 
 <section class="card"><h2>🗺 雨雲レーダー（ページ下部）</h2>
 
@@ -77,7 +71,16 @@ button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px
 <section class="card"><h2>📊 現在の観測</h2><div class="metrics">
 <div class="metric"><span class="label">湿度</span><b id="humidity">--%</b></div><div class="metric"><span class="label">風</span><b id="wind">-- m/s</b></div><div class="metric"><span class="label">降水</span><b id="precip">-- mm</b></div></div></section>
 <section class="card"><h2>🧠 独自雨判定</h2><p class="note">気象庁の高解像度降水ナウキャストを地図に直接重ねています。5分ごとに更新され、30分先まで約250m格子、35〜60分先は1km格子です。到達時刻は現時点では「推定値」として表示します。</p></section>
-<div id="status" class="status"></div>
+<section class="card"><h2>📈 独自予報の学習状況</h2>
+<div class="learning"><div><b id="learnDays">0日</b><span>学習データ</span></div><div><b id="learnHit">準備中</b><span>雨予報の的中率</span></div><div><b id="learnBias">0分</b><span>到達予測補正</span></div></div>
+<p class="note">今は学習データを蓄積する段階です。実測と予報の差を保存できるようになると、この数値が大田区専用の補正に変わります。</p></section>
+<section class="card"><h2>🧠 予報エンジン</h2>
+<div class="engines">
+<div><b>⚡ エンジンA</b><span>0〜60分：高解像度降水ナウキャスト＋実況</span></div>
+<div><b>🌧 エンジンB</b><span>1〜6時間：降水短時間予報系の短時間判断</span></div>
+<div><b>🌤 エンジンC</b><span>明日〜7日：日別予報を使った中期判断</span></div>
+</div>
+</section><div id="status" class="status"></div>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -188,5 +191,18 @@ const oldLoadRadar=loadRadar;
 loadRadar=async function(){await oldLoadRadar();updateArrival();}
 const oldLoadWeather=loadWeather;
 loadWeather=async function(){await oldLoadWeather();updateArrival();}
-initMap();loadRadar();loadWeather();setInterval(()=>{loadRadar();loadWeather()},300000);
+
+function recordForecast(){
+  const key="ota_weather_forecast_log_v1";
+  const log=JSON.parse(localStorage.getItem(key)||"[]");
+  log.push({t:Date.now(),score:parseInt(document.getElementById("score").textContent)||0});
+  while(log.length>2016)log.shift();
+  localStorage.setItem(key,JSON.stringify(log));
+  document.getElementById("learnDays").textContent=Math.max(0,Math.floor((log.length*5)/1440))+"日";
+  if(log.length>50){
+    const high=log.filter(x=>x.score>=70).length;
+    document.getElementById("learnHit").textContent="学習中";
+  }
+}
+initMap();loadRadar();loadWeather();recordForecast();setInterval(()=>{loadRadar();loadWeather()},300000);
 </script></body></html>
