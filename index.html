@@ -150,9 +150,10 @@ function wxText(code){code=Number(code);if(code===0)return"晴れ";if(code<=3)re
 
 function normalizeGAS(d){
   if(!d) throw new Error('空のデータ');
+  if(d.ok===false) throw new Error(d.error||'GAS error');
   const hourly=(d.hourly||[]).map(x=>({
     time:x.time||x.target_time,
-    precipitation_probability:Number(x.precipitation_probability ?? x.learned_probability*100 ?? x.rain_probability ?? 0),
+    precipitation_probability:Number(x.precipitation_probability ?? (x.learned_probability!=null ? x.learned_probability*100 : (x.rain_probability??0))),
     precipitation:Number(x.precipitation ?? x.precipitation_mm ?? 0),
     temperature_2m:Number(x.temperature_2m ?? x.temperature_c ?? 0),
     relative_humidity_2m:Number(x.relative_humidity_2m ?? x.humidity_pct ?? 0),
@@ -169,7 +170,7 @@ function normalizeGAS(d){
     wind_speed_10m_max:Number(x.wind_speed_10m_max ?? x.wind_kmh ?? 0)
   }));
   const c=d.current||{};
-  return {current:c,hourly,daily,learning_bias:d.learning_bias??0,source:'GAS独自予報'};
+  return {current:c,hourly,daily,learning_bias:Number(d.learning_bias??0),source:'GAS独自予報'};
 }
 
 function getGAS(action='forecast'){
@@ -177,29 +178,29 @@ function getGAS(action='forecast'){
     const cb='otaGas_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
     let timer;
+    let settled=false;
     const cleanup=()=>{
       clearTimeout(timer);
       script.remove();
       try{delete window[cb]}catch(e){window[cb]=undefined}
     };
+    const fail=(e)=>{if(settled)return;settled=true;cleanup();reject(e)};
     window[cb]=(data)=>{
-      cleanup();
+      if(settled)return;
+      settled=true;cleanup();
       if(data && data.ok===false) reject(new Error(data.error||'GAS error'));
-      else resolve(normalizeGAS(data));
+      else resolve(data);
     };
-    script.onerror=()=>{
-      cleanup();
-      reject(new Error('GAS Webアプリに接続できません'));
-    };
+    script.onerror=()=>fail(new Error('GAS Webアプリに接続できません'));
     script.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback='+encodeURIComponent(cb)+'&_='+Date.now();
     document.head.appendChild(script);
-    timer=setTimeout(()=>{
-      cleanup();
-      reject(new Error('GAS応答タイムアウト'));
-    },15000);
+    timer=setTimeout(()=>fail(new Error('GAS応答タイムアウト')),15000);
   });
 }
 
+async function getGASForecast(){
+  return normalizeGAS(await getGAS('forecast'));
+}
 async function getDirect(){
   const url='https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+'&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max&forecast_days=7&timezone=Asia%2FTokyo';
   const r=await fetch(url,{cache:'no-store'});
@@ -214,7 +215,7 @@ async function load(){
   $('status').textContent='天気データを取得中…';
   $('updated').textContent='取得中';
   try{
-    forecast=await getGAS('forecast'); forecast.source='GAS独自予報';
+    forecast=await getGASForecast();
   }catch(gasErr){
     console.warn('GAS取得失敗',gasErr);
     try{ forecast=await getDirect(); }
@@ -226,7 +227,7 @@ async function load(){
     }
   }
   render();
-  $('status').textContent='● '+forecast.source+' / 最新データを表示中';
+  $('status').textContent='● '+forecast.source+' / GASから取得 / 最新データを表示中';
 }
 
 function render(){
@@ -367,15 +368,20 @@ $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
 $('collect').onclick=async()=>{
-  $('status').textContent='学習データ更新中…';
+  const b=$('collect');
+  b.disabled=true;
+  $('status').textContent='予報を保存・採点中…';
   try{
-    const data=await getGAS('collect');
-    if(!data || data.ok===false) throw new Error(data?.error||'GAS更新エラー');
-    $('status').textContent='学習データを更新しました。採点 '+(data.scored||0)+'件 / 実測 '+(data.observations||0)+'件';
+    const saved=await getGAS('collect');
+    if(!saved || saved.ok===false) throw new Error(saved?.error||'予報保存エラー');
+    $('status').textContent='予報を保存しました。過去予報を採点中…';
+    const scored=await getGAS('score');
+    if(!scored || scored.ok===false) throw new Error(scored?.error||'採点エラー');
+    $('status').textContent='学習データを更新しました。採点 '+(scored.scored||0)+'件 / 実測 '+(scored.observations||0)+'件';
     await load();
   }catch(e){
     $('status').textContent='学習データ更新に失敗: '+e.message;
-  }
+  }finally{ b.disabled=false; }
 };
 setupMap();load();
 </script>
