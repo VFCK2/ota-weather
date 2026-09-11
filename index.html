@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報1.1</title>
+<title>OTA WEATHER | 大田区独自予報1.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -146,6 +146,225 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 .note{font-size:13px}
 .engines b{font-size:14px}.engine span{font-size:12px}
 .status{font-size:12px}
+
+
+/* ===== v1.6 FINAL MOBILE OVERRIDE ===== */
+@media screen and (max-width:700px){
+  /* 現在 / 今日：必ず2列 */
+  .hero{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:8px !important;
+    width:100% !important;
+  }
+  .hero > .card{
+    min-width:0 !important;
+    width:auto !important;
+    box-sizing:border-box !important;
+    padding:12px 10px !important;
+    margin:0 !important;
+    border-radius:15px !important;
+    overflow:hidden !important;
+  }
+
+  /* 現在カード */
+  .hero .now .kicker,
+  .hero .todayCard .kicker{
+    font-size:10px !important;
+    line-height:1.2 !important;
+    letter-spacing:.04em !important;
+  }
+  .hero .place{
+    font-size:18px !important;
+    line-height:1.15 !important;
+    margin:4px 0 8px !important;
+  }
+  .hero .currentRow{
+    display:flex !important;
+    align-items:center !important;
+    gap:5px !important;
+    margin:0 !important;
+  }
+  .hero .weatherIcon{
+    flex:0 0 auto !important;
+    font-size:37px !important;
+    line-height:1 !important;
+  }
+  .hero .currentRow > div:last-child{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+  }
+  .hero .temp{
+    font-size:34px !important;
+    line-height:1 !important;
+    letter-spacing:-.05em !important;
+    white-space:nowrap !important;
+  }
+  .hero .temp small{
+    font-size:13px !important;
+  }
+  .hero .summary{
+    font-size:11px !important;
+    line-height:1.2 !important;
+    margin-top:4px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .hero .metrics{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:4px !important;
+    margin-top:9px !important;
+  }
+  .hero .metric{
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    padding:5px 7px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    border-radius:9px !important;
+  }
+  .hero .metric span{
+    font-size:10px !important;
+  }
+  .hero .metric b{
+    font-size:14px !important;
+    white-space:nowrap !important;
+  }
+
+  /* 今日カード：アイコン・天気・気温を縦にして崩れを防止 */
+  .hero .todayHead{
+    display:block !important;
+    margin:0 !important;
+  }
+  .hero .todayLabel{
+    font-size:18px !important;
+    line-height:1.15 !important;
+    margin:4px 0 0 !important;
+  }
+  .hero .todayBadge{
+    display:none !important;
+  }
+  .hero .todayMain{
+    display:block !important;
+    width:100% !important;
+    text-align:center !important;
+    margin:7px 0 8px !important;
+  }
+  .hero .todayIcon{
+    display:block !important;
+    width:100% !important;
+    font-size:40px !important;
+    line-height:1 !important;
+    margin:0 0 5px !important;
+  }
+  .hero .todayMain > div:last-child{
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .hero .todaySummary{
+    display:block !important;
+    width:100% !important;
+    font-size:13px !important;
+    line-height:1.2 !important;
+    margin:0 0 7px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .hero .todayTemp{
+    display:flex !important;
+    align-items:baseline !important;
+    justify-content:center !important;
+    width:100% !important;
+    gap:4px !important;
+    white-space:nowrap !important;
+    margin:0 !important;
+  }
+  .hero .todayTemp b{
+    font-size:24px !important;
+    line-height:1 !important;
+    letter-spacing:-.04em !important;
+  }
+  .hero .todayTemp b:last-of-type{
+    font-size:22px !important;
+  }
+  .hero .todayTemp span{
+    font-size:8px !important;
+    line-height:1 !important;
+    margin:0 1px !important;
+  }
+
+  /* 今日の降水確率・降水量：現在と同じ縦積み */
+  .hero .todayDetails{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:4px !important;
+    width:100% !important;
+    margin:7px 0 0 !important;
+  }
+  .hero .todayDetails > div{
+    width:100% !important;
+    box-sizing:border-box !important;
+    min-width:0 !important;
+    min-height:32px !important;
+    padding:5px 7px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    border-radius:9px !important;
+  }
+  .hero .todayDetails span{
+    font-size:10px !important;
+    line-height:1.1 !important;
+  }
+  .hero .todayDetails b{
+    font-size:14px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+
+  /* 60分：週間予報と同じ横スクロール */
+  .timeline{
+    display:flex !important;
+    grid-template-columns:none !important;
+    gap:8px !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    padding:2px 2px 9px !important;
+    scrollbar-width:none !important;
+    -webkit-overflow-scrolling:touch !important;
+    scroll-snap-type:x proximity !important;
+  }
+  .timeline::-webkit-scrollbar{display:none !important}
+  .timeline .timebox{
+    flex:0 0 112px !important;
+    width:112px !important;
+    min-height:128px !important;
+    scroll-snap-align:start !important;
+  }
+
+  /* 週間予報：カードを大きく */
+  .days{
+    display:flex !important;
+    grid-template-columns:none !important;
+    gap:9px !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    padding:2px 2px 10px !important;
+    -webkit-overflow-scrolling:touch !important;
+    scroll-snap-type:x proximity !important;
+  }
+  .days .day{
+    flex:0 0 132px !important;
+    width:132px !important;
+    min-height:148px !important;
+    scroll-snap-align:start !important;
+  }
+}
 
 </style>
 </head>
