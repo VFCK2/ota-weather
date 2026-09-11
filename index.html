@@ -63,9 +63,8 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 .engine{background:#f7f9fc;border:1px solid var(--line);border-radius:13px;padding:11px}
 .engine b{font-size:13px}.engine span{display:block;font-size:11px;color:#536b84;margin-top:4px;line-height:1.5}
 .learning{display:flex;justify-content:space-between;gap:12px;align-items:center}.learnText b{display:block;font-size:14px}.learnText span{font-size:12px;color:#536b84;font-weight:600}
-button.secondary{border:1px solid #d7e2ef;background:#fff;color:#1f4f78;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer}.secondary:disabled{opacity:.55}
-.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:900}
-.status{font-size:11px;color:var(--muted);margin-top:7px}
+button.primary{border:0;background:var(--blue);color:white;border-radius:11px;padding:10px 13px;font-weight:900}
+.secondary{border:1px solid #cbd5e1;background:#fff;color:#17436a;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}.secondary:disabled,.primary:disabled{opacity:.55;cursor:wait}.status{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:700px){
  .app{padding:12px 10px 30px}.hero{grid-template-columns:1fr}.card{padding:14px;border-radius:17px}
  .place{font-size:22px}.temp{font-size:46px}.timeline{grid-template-columns:repeat(3,1fr)}.days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:8px;padding:2px 2px 8px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}.days .day{flex:0 0 112px;scroll-snap-align:start}
@@ -133,7 +132,7 @@ button.secondary{border:1px solid #d7e2ef;background:#fff;color:#1f4f78;padding:
   </section>
 
   <section class="card">
-    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><button class="secondary" id="gasTest" type="button">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
+    <div class="learning"><div class="learnText"><b>🧠 学習状態</b><span id="learning">確認中…</span></div><div style="display:flex;gap:8px;align-items:center"><button class="secondary" id="gasTest">GAS接続テスト</button><button class="primary" id="collect">学習データ更新</button></div></div>
     <div class="status" id="status"></div>
   </section>
 </div>
@@ -173,52 +172,68 @@ function normalizeGAS(d){
   return {current:c,hourly,daily,learning_bias:d.learning_bias??0,source:'GAS独自予報'};
 }
 
-function getGAS(action='forecast'){
-  return getGAS_JSONP(action).catch(()=>getGAS_IFRAME(action));
-}
+let gasQueue=Promise.resolve();
+let gasPending=null;
 
-function getGAS_JSONP(action='forecast'){
+// Apps Script Content ServiceのJSONP用固定callback。
+// 実ブラウザで callback=test123 の応答が確認できているため、
+// 毎回ランダムなcallback名を生成せず固定名を使用します。
+window.otaWeatherCallback=function(payload){
+  if(!gasPending)return;
+  const p=gasPending;
+  gasPending=null;
+  if(payload&&payload.ok===false){
+    p.reject(new Error(payload.error||'GAS APIエラー'));
+  }else if(!payload){
+    p.reject(new Error('GASから空の応答'));
+  }else{
+    p.resolve(payload);
+  }
+};
+
+function requestGAS(action='forecast'){
   return new Promise((resolve,reject)=>{
-    const cb='otaGasCb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
-    let settled=false;
-    let timer=null;
-    const cleanup=()=>{if(timer)clearTimeout(timer);timer=null;script.remove();try{delete window[cb]}catch(e){window[cb]=undefined}};
-    const finish=(fn,v)=>{if(settled)return;settled=true;cleanup();fn(v)};
-    window[cb]=(payload)=>{if(!payload)finish(reject,new Error('GASから空の応答'));else if(payload.ok===false)finish(reject,new Error(payload.error||'GAS APIエラー'));else finish(resolve,payload)};
+    let finished=false;
+    const finish=(ok,value)=>{
+      if(finished)return;
+      finished=true;
+      if(gasPending && gasPending.script===script)gasPending=null;
+      clearTimeout(timer);
+      script.remove();
+      ok?resolve(value):reject(value);
+    };
+    const timer=setTimeout(()=>{
+      finish(false,new Error('GAS応答タイムアウト（25秒）'));
+    },25000);
+    gasPending={
+      script,
+      resolve:(v)=>finish(true,v),
+      reject:(e)=>finish(false,e)
+    };
+    const q='?action='+encodeURIComponent(action)+'&callback=otaWeatherCallback&_='+Date.now();
     script.async=true;
-    script.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback='+cb+'&_='+Date.now();
-    script.onerror=()=>finish(reject,new Error('JSONP読み込み失敗'));
-    timer=setTimeout(()=>finish(reject,new Error('JSONPタイムアウト')),8000);
+    script.src=GAS_URL+q;
     document.head.appendChild(script);
+    // script.onerrorでは失敗判定しない。
+    // Apps Script Content Serviceはscript.googleusercontent.comへ
+    // リダイレクトするため、onerrorだけで判定すると誤判定する可能性があります。
   });
 }
 
-function getGAS_IFRAME(action='forecast'){
-  return new Promise((resolve,reject)=>{
-    const token='ota_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;width:1px;height:1px;left:-10px;top:-10px;border:0;opacity:0;pointer-events:none';
-    let settled=false;
-    const cleanup=()=>{clearTimeout(timer);window.removeEventListener('message',onMessage);iframe.remove()};
-    const finish=(fn,v)=>{if(settled)return;settled=true;cleanup();fn(v)};
-    const onMessage=(ev)=>{
-      const d=ev.data;
-      if(!d||d.source!=='ota-weather-gas'||d.token!==token)return;
-      if(d.ok===false)finish(reject,new Error(d.error||'GASブリッジエラー'));else finish(resolve,d.data);
-    };
-    const timer=setTimeout(()=>finish(reject,new Error('GAS接続タイムアウト')),12000);
-    window.addEventListener('message',onMessage);
-    iframe.src=GAS_URL+'?action='+encodeURIComponent(action)+'&bridge=1&token='+encodeURIComponent(token)+'&_='+Date.now();
-    document.body.appendChild(iframe);
-  });
+function getGAS(action='forecast'){
+  // 同時アクセスを直列化し、固定callbackの競合を防止します。
+  const run=gasQueue.then(()=>requestGAS(action));
+  gasQueue=run.catch(()=>{});
+  return run;
 }
 
 async function load(){
   $('status').textContent='GASから独自予報を取得中…';
   $('updated').textContent='GAS接続中';
   try{
-    forecast=normalizeGAS(await getGAS('forecast'));
+    const data=await getGAS('forecast');
+    forecast=normalizeGAS(data);
     render();
     $('status').textContent='● GAS接続成功 / GAS_LEARNED の独自予報を表示中';
   }catch(e){
@@ -366,12 +381,24 @@ function showFrame(i){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=frames.length-1;$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
+$('gasTest').onclick=async()=>{
+  $('gasTest').disabled=true;
+  $('status').textContent='GAS接続テスト中…';
+  try{
+    const data=await getGAS('forecast');
+    $('status').textContent='● GAS接続OK / '+(data&&data.engine?data.engine:'GAS応答')+' を受信しました';
+  }catch(e){
+    $('status').textContent='GAS接続テスト失敗：'+(e.message||e);
+  }finally{
+    $('gasTest').disabled=false;
+  }
+};
 $('collect').onclick=async()=>{
   $('collect').disabled=true;
   $('status').textContent='GASで学習データを更新中…';
   try{
     const data=await getGAS('collect');
-    if(data && data.ok===false) throw new Error(data.error||'GAS APIエラー');
+    if(data&&data.ok===false)throw new Error(data.error||'GAS APIエラー');
     $('status').textContent='● GASで学習データを更新しました。再取得中…';
     await load();
   }catch(e){
@@ -379,18 +406,6 @@ $('collect').onclick=async()=>{
   }finally{
     $('collect').disabled=false;
   }
-};
-$('gasTest').onclick=async()=>{
-  const b=$('gasTest');
-  b.disabled=true;
-  $('status').textContent='GAS接続をテスト中…';
-  try{
-    const d=await getGAS('forecast');
-    if(!d || d.ok===false) throw new Error(d?.error||'GAS応答が不正です');
-    $('status').textContent='● GAS接続OK / GAS_LEARNED を受信しました';
-  }catch(e){
-    $('status').textContent='GAS接続失敗：'+(e.message||e);
-  }finally{b.disabled=false;}
 };
 setupMap();load();
 </script>
