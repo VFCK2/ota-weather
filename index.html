@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220"><title>大田区 超局地天気 v0.7</title>
+<meta name="theme-color" content="#0b1220"><title>大田区 超局地天気 v0.8</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#eef5fb;color:#172334;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
@@ -18,8 +18,8 @@ button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px
 .time{font-size:15px;font-weight:750;color:#34445a}.rain{font-size:22px;font-weight:800;margin:4px 0}.mm{font-size:13px;color:#718096}.bar{height:7px;background:#e8edf3;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:#377dff}
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:#f4f8fc;border:1px solid #e5edf5;padding:13px;border-radius:13px}.metric b{display:block;font-size:23px;margin-top:3px}
 .note,.status{font-size:13px;color:#65758a;line-height:1.6}.status{text-align:center;margin-top:6px}
-.arrival{background:linear-gradient(135deg,#e9f6ff,#d9efff);color:#12304b;text-align:center;padding:20px 14px;border-color:#b9ddf6}
-.arrivalLabel{font-size:16px;color:#35627f;font-weight:700}.arrival #arrivalMain{font-size:36px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:13px;color:#527089;line-height:1.5}
+.arrival{background:#e7f4ff;color:#12304b;text-align:center;padding:20px 14px;border:2px solid #a8d6f5}
+.arrivalLabel{font-size:16px;color:#234d6d;font-weight:800}.arrival #arrivalMain{font-size:36px;font-weight:850;margin:4px 0}.arrival #arrivalSub{font-size:13px;color:#294e68;line-height:1.5}
 .leaflet-control-attribution{font-size:8px!important}
 @media(max-width:500px){.map{height:340px}.timeline{grid-template-columns:repeat(3,1fr)}}
 
@@ -31,11 +31,11 @@ button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px
 .weekday{font-size:14px;font-weight:750}.weekicon{font-size:24px;text-align:center}.weektemp{font-size:14px;font-weight:750}.weekrain{font-size:13px;font-weight:700;text-align:right}
 .engines{display:grid;gap:7px}.engines div{background:#f4f8fc;border:1px solid #e4edf5;border-radius:12px;padding:11px}.engines b{display:block;font-size:14px}.engines span{display:block;font-size:12px;color:#9cafc3;margin-top:3px}
 @media(max-width:500px){.map{height:300px}.daygrid{grid-template-columns:1fr 1fr}.weekrow{grid-template-columns:62px 40px 1fr auto}.weekly{gap:6px}}
-.overallTop{display:flex;align-items:center;justify-content:space-between;gap:10px}.overallTitle{font-size:23px;font-weight:850;margin-top:3px}.overallScore{font-size:42px;font-weight:900}.overallText{font-size:14px;color:#b9c9da;line-height:1.55;margin:8px 0}.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{font-size:11px;background:rgba(255,255,255,.08);border-radius:99px;padding:6px 9px;color:#d8e4f0}
+.overall{background:#ffffff;border:2px solid #b9d9f2}.overallTop{display:flex;align-items:center;justify-content:space-between;gap:10px}.overallTitle{font-size:25px;font-weight:900;margin-top:3px;color:#14283c}.overallScore{font-size:48px;font-weight:950;color:#1264a3}.overallText{font-size:14px;color:#30485f;line-height:1.55;margin:8px 0}.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{font-size:12px;background:#edf6fd;border:1px solid #cfe4f4;border-radius:99px;padding:7px 10px;color:#24445e;font-weight:700}
 .learning{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.learning div{background:#f4f8fc;border:1px solid #e4edf5;border-radius:12px;padding:11px;text-align:center}.learning b{display:block;font-size:21px}.learning span{display:block;font-size:11px;color:#64748b;margin-top:3px}
 </style></head>
 <body>
-<header><h1>🌧 大田区 超局地天気</h1><div class="sub">気象庁 高解像度降水ナウキャスト × 独自雨判定　v0.7</div></header>
+<header><h1>🌧 大田区 超局地天気</h1><div class="sub">気象庁 高解像度降水ナウキャスト × 独自雨判定　v0.8</div></header>
 <main>
 <section class="card now"><div><div class="label">大田区・現在</div><div id="temp" class="temp">--°</div><div id="weather" class="weather">読み込み中…</div><div id="updated" class="updated"></div></div>
 <div style="text-align:right"><div class="label">雨リスク</div><div id="score" class="score">--%</div><div id="advice" class="advice">判定中</div></div></section>
@@ -73,7 +73,7 @@ button{border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:9px 11px
 <section class="card"><h2>🧠 独自雨判定</h2><p class="note">気象庁の高解像度降水ナウキャストを地図に直接重ねています。5分ごとに更新され、30分先まで約250m格子、35〜60分先は1km格子です。到達時刻は現時点では「推定値」として表示します。</p></section>
 <section class="card"><h2>📈 独自予報の学習状況</h2>
 <div class="learning"><div><b id="learnDays">0日</b><span>学習データ</span></div><div><b id="learnHit">準備中</b><span>雨予報の的中率</span></div><div><b id="learnBias">0分</b><span>到達予測補正</span></div></div>
-<p class="note">今は学習データを蓄積する段階です。実測と予報の差を保存できるようになると、この数値が大田区専用の補正に変わります。</p></section>
+<button id="learnNow" style="margin-top:8px;width:100%">🧠 今すぐ予報データを学習記録</button><p class="note">今は学習データを蓄積する段階です。実測と予報の差を保存できるようになると、この数値が大田区専用の補正に変わります。</p></section>
 <section class="card"><h2>🧠 予報エンジン</h2>
 <div class="engines">
 <div><b>⚡ エンジンA</b><span>0〜60分：高解像度降水ナウキャスト＋実況</span></div>
@@ -204,5 +204,36 @@ function recordForecast(){
     document.getElementById("learnHit").textContent="学習中";
   }
 }
+
+async function trainIndependentModel(){
+ const btn=document.getElementById("learnNow");
+ if(btn){btn.disabled=true;btn.textContent="🧠 学習データ取得中…";}
+ try{
+   const end=new Date(Date.now()-3600000);
+   const start=new Date(end.getTime()-6*86400000);
+   const iso=d=>d.toISOString().slice(0,10);
+   const u=`https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}&start_date=${iso(start)}&end_date=${iso(end)}&hourly=precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=Asia%2FTokyo`;
+   const actual=await fetch(u).then(r=>r.json());
+   const key="ota_weather_training_v2";
+   const old=JSON.parse(localStorage.getItem(key)||"[]");
+   const a=actual.hourly||{};
+   const rows=(a.time||[]).map((t,i)=>({
+     time:t,actualRain:Number(a.precipitation?.[i]||0),
+     temp:Number(a.temperature_2m?.[i]||0),humidity:Number(a.relative_humidity_2m?.[i]||0),
+     wind:Number(a.wind_speed_10m?.[i]||0)
+   }));
+   const merged=[...old,...rows];
+   const uniq=[...new Map(merged.map(x=>[x.time,x])).values()].sort((a,b)=>a.time.localeCompare(b.time)).slice(-5000);
+   localStorage.setItem(key,JSON.stringify(uniq));
+   document.getElementById("learnDays").textContent=Math.max(1,Math.ceil(uniq.length/24))+"日";
+   document.getElementById("learnHit").textContent=uniq.length>100?"学習中":"準備中";
+   document.getElementById("learnBias").textContent="自動";
+   if(btn){btn.disabled=false;btn.textContent="🧠 学習データを更新";}
+ }catch(e){
+   console.error(e);
+   if(btn){btn.disabled=false;btn.textContent="🧠 再試行";}
+ }
+}
+document.getElementById("learnNow")?.addEventListener("click",trainIndependentModel);
 initMap();loadRadar();loadWeather();recordForecast();setInterval(()=>{loadRadar();loadWeather()},300000);
 </script></body></html>
