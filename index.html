@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区独自予報3</title>
+<title>OTA WEATHER | 大田区独自予報4</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -421,7 +421,9 @@ $('collect').onclick=async()=>{
   try{
     const r=await getGAS('collect');
     if(r&&r.ok===false)throw new Error(r.error||'GAS APIエラー');
-    $('status').textContent='● 学習データ更新完了。予報を再取得中…';
+    const scored = r && r.score ? Number(r.score.saved || 0) : 0;
+    const obs = r && r.score ? Number(r.score.observations || 0) : 0;
+    $('status').textContent=`● 学習データ更新完了（採点 ${scored}件 / 実測 ${obs}件）。予報を再取得中…`;
     await load();
   }catch(e){$('status').textContent='学習データ更新に失敗：'+(e.message||e)}
 };
