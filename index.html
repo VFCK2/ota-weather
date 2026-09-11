@@ -174,39 +174,87 @@ function normalizeGAS(d){
   return {current:c,hourly,daily,learning_bias:Number(d.learning_bias??0),source:'GAS独自予報',generated_at:d.generated_at||''};
 }
 
-// Apps Script Content Serviceはリダイレクトされるため、script.onerrorでは失敗判定しない。
-// 固定callbackを1本だけ用意し、callback実行またはタイムアウトで完了を判断する。
-let gasPending=null;
-function otaWeatherCallback(payload){
+// GAS接続はiframeブリッジを第一候補にする。
+// GitHub Pages → GAS → script.googleusercontent.com のリダイレクトを
+// 親ページ側のscript実行に依存しないため、JSONPより安定しやすい。
+let gasBusy=false, gasPending=null, gasRequestId=0;
+
+function gasMessageHandler(ev){
+  const d=ev && ev.data;
   const p=gasPending;
-  if(!p) return;
+  if(!p || !d || d.type!=='OTA_WEATHER_GAS_BRIDGE' || d.id!==p.id) return;
   gasPending=null;
   clearTimeout(p.timer);
-  if(gasScript){gasScript.remove();gasScript=null;}
+  if(p.iframe){p.iframe.remove();}
   gasBusy=false;
-  if(payload&&payload.ok===false) p.reject(new Error(payload.error||'GAS APIエラー'));
-  else p.resolve(payload||null);
+  if(d.payload && d.payload.ok===false) p.reject(new Error(d.payload.error||'GAS APIエラー'));
+  else p.resolve(d.payload||null);
 }
-function getGAS(action='forecast'){
+window.addEventListener('message',gasMessageHandler);
+
+function getGASBridge(action='latest', timeout=12000){
   if(gasPending) return Promise.reject(new Error('GAS通信が重複しています'));
   return new Promise((resolve,reject)=>{
     gasBusy=true;
-    const id=++gasRequestId;
-    const s=document.createElement('script');
-    gasScript=s;
-    const p={resolve,reject,timer:null,id};
+    const id='gas_'+Date.now()+'_'+(++gasRequestId);
+    const iframe=document.createElement('iframe');
+    iframe.style.display='none';
+    iframe.setAttribute('aria-hidden','true');
+    const p={resolve,reject,iframe,id,timer:null};
     gasPending=p;
     p.timer=setTimeout(()=>{
       if(gasPending!==p)return;
       gasPending=null;
       gasBusy=false;
-      if(gasScript){gasScript.remove();gasScript=null;}
-      reject(new Error('GAS応答タイムアウト（25秒）'));
-    },25000);
+      iframe.remove();
+      reject(new Error('GAS応答タイムアウト（12秒）'));
+    },timeout);
+    iframe.src=GAS_URL+'?action=bridge&target='+encodeURIComponent(action)+'&id='+encodeURIComponent(id)+'&_='+Date.now();
+    document.body.appendChild(iframe);
+  });
+}
+
+// JSONPは予備経路。iframeブリッジが使えない環境だけこちらへ切り替える。
+let gasJsonpPending=null;
+window.otaWeatherCallback=function(payload){
+  const p=gasJsonpPending;
+  if(!p)return;
+  gasJsonpPending=null;
+  clearTimeout(p.timer);
+  p.script.remove();
+  if(payload&&payload.ok===false)p.reject(new Error(payload.error||'GAS APIエラー'));
+  else p.resolve(payload||null);
+};
+function getGASJsonp(action='latest',timeout=10000){
+  if(gasJsonpPending)return Promise.reject(new Error('GAS JSONP通信が重複しています'));
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    const p={script:s,resolve,reject,timer:null};
+    gasJsonpPending=p;
+    p.timer=setTimeout(()=>{
+      if(gasJsonpPending!==p)return;
+      gasJsonpPending=null;
+      s.remove();
+      reject(new Error('GAS JSONP応答タイムアウト（10秒）'));
+    },timeout);
     s.async=true;
-    s.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback=otaWeatherCallback&_='+Date.now()+'_'+id;
+    s.src=GAS_URL+'?action='+encodeURIComponent(action)+'&callback=otaWeatherCallback&_='+Date.now();
     document.head.appendChild(s);
   });
+}
+
+async function getGAS(action='latest'){
+  try{
+    return await getGASBridge(action,12000);
+  }catch(first){
+    // 接続テスト・参照系はJSONPで一度だけ救済する。
+    if(action==='latest' || action==='forecast' || action==='learning'){
+      try{return await getGASJsonp(action,10000)}catch(second){
+        throw new Error((first.message||first)+' / 予備通信: '+(second.message||second));
+      }
+    }
+    throw first;
+  }
 }
 
 async function getGASForecast(){
@@ -215,7 +263,7 @@ async function getGASForecast(){
 }
 
 async function load(){
-  $('status').textContent='GAS予報データを確認中…';
+  $('status').textContent='GASから予報スナップショットを取得中…';
   $('updated').textContent='GAS接続中…';
   try{
     forecast=await getGASForecast();
