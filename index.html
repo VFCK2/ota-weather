@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.0</title>
+<title>OTA WEATHER | 大田区天気2.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -446,7 +446,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     letter-spacing:-.02em !important;
   }
 
-  /* この先6時間：カード内の余白を圧縮し、時刻・アイコン・降水量を大きく */
+  /* この先12時間：カード内の余白を圧縮し、時刻・アイコン・降水量を大きく */
   .timeline .timebox{
     flex:0 0 122px !important;
     width:122px !important;
@@ -681,6 +681,91 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   }
 }
 
+/* ===== v3.6 CURRENT / TODAY VISUAL UNIFICATION ===== */
+@media screen and (max-width:700px){
+  /* 現在と今日の主要レイアウトを同じ思想に統一 */
+  .hero .now .currentRow{
+    display:flex !important;
+    align-items:center !important;
+    gap:7px !important;
+    min-height:66px !important;
+    margin:0 0 9px !important;
+  }
+  .hero .now .weatherIcon{
+    flex:0 0 48px !important;
+    width:48px !important;
+    font-size:43px !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+  .hero .now .currentRow > div:last-child{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+  }
+  /* 天気の文字を気温の上へ */
+  .hero .now .summary{
+    order:-1 !important;
+    width:100% !important;
+    font-size:12px !important;
+    line-height:1.2 !important;
+    font-weight:900 !important;
+    margin:0 0 4px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .hero .now .temp{
+    order:0 !important;
+    font-size:34px !important;
+    line-height:1 !important;
+    letter-spacing:-.05em !important;
+    white-space:nowrap !important;
+  }
+  .hero .now .temp small{font-size:13px !important}
+
+  /* 今日のアイコンも現在と同じ大きさ */
+  .hero .todayIcon{
+    flex-basis:48px !important;
+    width:48px !important;
+    font-size:43px !important;
+  }
+
+  /* 今日の最高・最低は同一サイズ。最高=赤系、最低=青系 */
+  .hero .todayTemp b{
+    font-size:27px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    letter-spacing:-.04em !important;
+  }
+  .hero .todayTemp b:first-of-type{color:#d94b4b !important}
+  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
+  .hero .todayTemp span{
+    font-size:9px !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+    color:#607890 !important;
+    margin:0 1px !important;
+  }
+
+  /* 現在カードの指標も今日カードと同じ密度感 */
+  .hero .metrics{
+    grid-template-columns:1fr !important;
+    gap:4px !important;
+    margin-top:4px !important;
+  }
+  .hero .metric{
+    min-height:32px !important;
+    height:32px !important;
+    padding:5px 8px !important;
+    border-radius:9px !important;
+  }
+  .hero .metric span{font-size:10px !important;line-height:1.1 !important}
+  .hero .metric b{font-size:14px !important;line-height:1 !important}
+}
+
 </style>
 </head>
 <body>
@@ -694,7 +779,6 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="currentRow"><div class="weatherIcon" id="icon">☁️</div><div><div class="temp" id="temp">--<small>℃</small></div><div class="summary" id="summary">取得中…</div></div></div>
       <div class="metrics">
         <div class="metric"><span>降水</span><b id="rainNow">--</b></div>
-        <div class="metric"><span>湿度</span><b id="humidity">--</b></div>
         <div class="metric"><span>風</span><b id="wind">--</b></div>
       </div>
     </section>
@@ -725,7 +809,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     <div class="note">現在の雨雲と、これから60分の動きを気象庁ナウキャストで確認します。</div>
   </section>
 
-  <div class="sectionTitle"><h2>この先6時間</h2><span>時間ごとの見通し</span></div>
+  <div class="sectionTitle"><h2>この先12時間</h2><span>時間ごとの見通し</span></div>
   <section class="card"><div class="timeline" id="timeline"></div></section>
 
   <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
@@ -870,7 +954,7 @@ async function load(){
   try{
     forecast=await getGASForecast();
     render();
-    $('status').textContent='● GAS接続成功 / JMAナウキャスト＋通常予報を表示中 / 学習補正を6時間予報に適用';
+    $('status').textContent='● GAS接続成功 / JMAナウキャスト＋通常予報を表示中 / 学習補正を時間予報に適用';
   }catch(e){
     console.error('GAS取得失敗',e);
     $('status').textContent='GAS接続失敗：'+(e.message||e);
@@ -891,14 +975,13 @@ function render(){
   $('todayPrecip').textContent=Number(today.precipitation_sum??0).toFixed(1)+' mm';
   $('updated').textContent='更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
   $('temp').innerHTML=(c.temperature_2m??'--')+'<small>℃</small>';
-  $('humidity').textContent=(c.relative_humidity_2m??'--')+'%';
   $('wind').textContent=(c.wind_speed_10m??'--')+' km/h';
   $('rainNow').textContent=(c.precipitation??0)+' mm';
   $('icon').textContent=wxIcon(c.weather_code);
   $('summary').textContent=wxText(c.weather_code);
 
-  const future=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,6);
-  // 6時間予報では降水確率を表示せず、天気・降水量を優先します。
+  const future=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,12);
+  // 時間予報では降水確率を表示せず、天気・降水量を優先します。
   $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
   $('days').innerHTML=d.slice(0,7).map(x=>{const dt=new Date(x.time);const md=dt.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});const wd=dt.toLocaleDateString('ja-JP',{weekday:'short'});return `<div class="day"><div class="d"><span>${md}</span><b>${wd}</b></div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`;}).join('');
   $('learningText').textContent=`学習補正 ${Number(forecast.learning_bias||0).toFixed(3)} / 累計 ${learningState.samples||0}件${learningState.accuracy!=null?' / 的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
