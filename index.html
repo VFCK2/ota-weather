@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.3</title>
+<title>OTA WEATHER | 大田区天気2.4</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -829,6 +829,161 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .learningCard{min-height:72px}
 }
 .timelineLoading{padding:18px;color:#718096;font-weight:800;text-align:center;min-width:100%}
+
+
+/* ===== v4.0 FINAL DESKTOP: TODAY FORECAST redesign ===== */
+@media screen and (min-width:701px){
+  /* TODAYカードを現在カードとは明確に違う「今日の予報」カードへ */
+  .hero .todayCard{
+    position:relative;
+    overflow:hidden;
+    padding:24px 25px 22px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid #e5edf6;
+  }
+  .hero .todayCard::after{
+    content:"TODAY";
+    position:absolute;
+    right:18px;
+    top:13px;
+    font-size:44px;
+    line-height:1;
+    font-weight:1000;
+    letter-spacing:-.06em;
+    color:rgba(52,120,201,.055);
+    pointer-events:none;
+  }
+  .hero .todayHead{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    min-height:76px;
+    margin:0;
+  }
+  .hero .todayCard .kicker{
+    font-size:12px;
+    letter-spacing:.12em;
+    color:#6b839c;
+    margin-bottom:7px;
+  }
+  .hero .todayLabel{
+    font-size:30px;
+    line-height:1.1;
+    font-weight:950;
+    letter-spacing:-.035em;
+    color:#18283a;
+    margin:0;
+  }
+  .hero .todayBadge{
+    display:block;
+    padding:7px 11px;
+    border-radius:999px;
+    background:#edf5ff;
+    color:#3478c9;
+    font-size:11px;
+    font-weight:900;
+    border:1px solid #dcecff;
+  }
+  .hero .todayMain{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:22px;
+    min-height:160px;
+    margin:4px 0 17px;
+    padding:16px 17px;
+    border-radius:20px;
+    background:#f5f9fd;
+    border:1px solid #e7eff7;
+  }
+  .hero .todayIcon{
+    flex:0 0 102px;
+    width:102px;
+    font-size:88px;
+    line-height:1;
+    text-align:center;
+  }
+  .hero .todayMain > div:last-child{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .hero .todaySummary{
+    font-size:21px;
+    line-height:1.25;
+    font-weight:950;
+    color:#24384d;
+    margin:0 0 9px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .hero .todayTemp{
+    display:flex;
+    align-items:baseline;
+    gap:7px;
+    white-space:nowrap;
+  }
+  .hero .todayTemp b{
+    font-size:50px !important;
+    line-height:1;
+    font-weight:950;
+    letter-spacing:-.055em;
+  }
+  .hero .todayTemp b:first-of-type{color:#d94b4b !important}
+  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
+  .hero .todayTemp span{
+    font-size:12px;
+    line-height:1;
+    font-weight:900;
+    color:#657d95;
+    margin:0 3px 0 0;
+  }
+  .hero .todayDetails{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:0;
+  }
+  .hero .todayDetails > div{
+    min-height:58px;
+    padding:10px 13px;
+    border-radius:14px;
+    background:#fff;
+    border:1px solid #e4edf6;
+    box-shadow:0 3px 12px rgba(35,75,115,.04);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .hero .todayDetails span{
+    font-size:12px;
+    font-weight:850;
+    color:#607890;
+  }
+  .hero .todayDetails b{
+    font-size:20px;
+    line-height:1;
+    font-weight:950;
+    color:#20374d;
+  }
+
+  /* PCの12時間カードも「12枚ある」ことが一目で分かる横並び */
+  .hero + .sectionTitle + .card .timeline{
+    display:flex;
+    overflow-x:auto;
+  }
+  .hero + .sectionTitle + .card .timebox{
+    flex:0 0 110px;
+  }
+}
 
 </style>
 </head>
