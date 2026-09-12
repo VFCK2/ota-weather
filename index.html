@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v11.1</title>
+<title>OTA WEATHER v12.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2197,10 +2197,47 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* ===== v12.0 GPS現在地モード ===== */
+.headerRight{display:flex;align-items:center;gap:9px}
+.locationBtn{
+  border:1px solid #d8e5f1;
+  background:#fff;
+  color:#355773;
+  border-radius:10px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.locationBtn.gpsActive{
+  background:#eaf4ff;
+  border-color:#b9d9f7;
+  color:#2372c5;
+}
+@media(max-width:700px){
+  .headerRight{gap:6px}
+  .locationBtn{
+    padding:6px 7px;
+    font-size:10px;
+    border-radius:9px;
+    white-space:nowrap;
+  }
+  .updated{font-size:10px}
+}
+</style>
+
 </head>
 <body>
 <div class="app">
-  <div class="header"><div class="brand"><b>OTA</b> WEATHER</div><div class="updated" id="updated">GAS接続中…</div></div>
+  <div class="header">
+  <div class="brand"><b>OTA</b> WEATHER</div>
+  <div class="headerRight">
+    <button class="locationBtn" id="locationBtn" type="button">📍現在地</button>
+    <div class="updated" id="updated">GAS接続中…</div>
+  </div>
+</div>
 
   <div class="hero">
     <section class="card now">
@@ -2240,7 +2277,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     </section>
     <section class="card mapCard">
     <div class="mapSectionTitle"><b>今から60分</b><span>気象庁・高解像度降水ナウキャスト</span></div>
-    <div class="mapTop"><b>大田区周辺の雨雲</b><span>5分ごと更新 / 30分先まで250m・35〜60分先1km</span></div>
+    <div class="mapTop"><b id="mapAreaTitle">大田区周辺の雨雲</b><span>5分ごと更新 / 30分先まで250m・35〜60分先1km</span></div>
     <div id="map"></div>
     <div class="mapControls">
       <button id="play">▶ 再生</button>
@@ -2285,7 +2322,10 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const GAS_URL="https://script.google.com/macros/s/AKfycbxNgg7izI18Yxk36hyzfGe8GhVUlQvXKCbkKSIcMRtKUEwsjTvZcFUNxoqqLQFLoJJMng/exec";
-const LAT=35.5613, LON=139.7161;
+const BASE_LAT=35.5613, BASE_LON=139.7161;
+let ACTIVE_LAT=BASE_LAT, ACTIVE_LON=BASE_LON;
+let locationMode='ota', locationLabel='大田区';
+let locationMarker=null;
 let forecast=null, frames=[], map, rainLayer, timer=null;
 let learningState={bias:0,samples:0,accuracy:null};
 const $=id=>document.getElementById(id);
@@ -2407,14 +2447,136 @@ async function getGASForecast(){
   return normalizeGAS(d);
 }
 
+
+async function fetchLocationForecast(){
+  const url='https://api.open-meteo.com/v1/forecast'
+    +'?latitude='+ACTIVE_LAT
+    +'&longitude='+ACTIVE_LON
+    +'&current=temperature_2m,precipitation,weather_code,wind_speed_10m'
+    +'&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'
+    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max'
+    +'&forecast_days=8&timezone=Asia%2FTokyo';
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('現在地の天気 HTTP '+r.status);
+  const d=await r.json();
+  if(!d.current||!d.hourly||!d.daily) throw new Error('現在地の天気データなし');
+  return d;
+}
+
+function setLocationLabels(){
+  document.querySelectorAll('.topCardPlace').forEach(el=>{
+    el.textContent=locationLabel;
+  });
+  const title=$('mapAreaTitle');
+  if(title) title.textContent=locationLabel+'周辺の雨雲';
+  const btn=$('locationBtn');
+  if(btn){
+    btn.textContent=locationMode==='gps'?'📍現在地中':'📍現在地';
+    btn.classList.toggle('gpsActive',locationMode==='gps');
+  }
+}
+
+async function refreshMapLocation(){
+  if(!map)return;
+  map.setView([ACTIVE_LAT,ACTIVE_LON],11,{animate:false});
+  if(locationMarker){
+    locationMarker.setLatLng([ACTIVE_LAT,ACTIVE_LON]);
+    locationMarker.setPopupContent(locationLabel);
+  }else{
+    locationMarker=L.marker([ACTIVE_LAT,ACTIVE_LON]).addTo(map).bindPopup(locationLabel);
+  }
+  locationMarker.openPopup();
+  await loadFrames();
+}
+
+async function useGpsLocation(){
+  if(!navigator.geolocation){
+    $('status').textContent='この端末では位置情報を利用できません';
+    return;
+  }
+  $('status').textContent='現在地を取得中…';
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{
+      ACTIVE_LAT=Number(pos.coords.latitude);
+      ACTIVE_LON=Number(pos.coords.longitude);
+      if(!Number.isFinite(ACTIVE_LAT)||!Number.isFinite(ACTIVE_LON)) throw new Error('位置情報が不正です');
+
+      locationMode='gps';
+      locationLabel='現在地';
+      setLocationLabels();
+
+      // 予報表示は現在地へ切り替える。学習データは大田区側を使い続ける。
+      forecast=await fetchLocationForecast();
+      hourlyForecastLoadedV92=false;
+      hourlyForecastLoadingV92=false;
+      render();
+      await ensureSevenDayForecast(forecast.daily||[]);
+      await ensure12HourForecast();
+      await refreshMapLocation();
+
+      $('status').textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
+      $('updated').textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){
+      console.error('GPS weather error',e);
+      $('status').textContent='現在地の天気取得失敗：'+(e.message||e);
+    }
+  }, err=>{
+    const msg=err.code===1?'位置情報の利用が許可されていません':err.code===2?'現在地を取得できませんでした':'位置情報の取得がタイムアウトしました';
+    $('status').textContent=msg+' / 大田区表示を継続';
+  }, {enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+}
+
+async function useOtaLocation(){
+  ACTIVE_LAT=BASE_LAT;
+  ACTIVE_LON=BASE_LON;
+  locationMode='ota';
+  locationLabel='大田区';
+  setLocationLabels();
+  try{
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
+    await load();
+    await ensureSevenDayForecast(forecast?.daily||[]);
+    await ensure12HourForecast();
+    await refreshMapLocation();
+  }catch(e){
+    console.error('Ota location restore error',e);
+  }
+}
+
+$('locationBtn').onclick=()=>{
+  if(locationMode==='gps'){
+    useOtaLocation();
+  }else{
+    useGpsLocation();
+  }
+};
+
 async function load(){
+  if(locationMode==='gps'){
+    $('status').textContent='現在地の予報を取得中…';
+    $('updated').textContent='現在地取得中…';
+    try{
+      forecast=await fetchLocationForecast();
+      render();
+      await ensureSevenDayForecast(forecast.daily||[]);
+      await ensure12HourForecast();
+      $('status').textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
+    }catch(e){
+      console.error('現在地予報取得失敗',e);
+      $('status').textContent='現在地の天気取得失敗：'+(e.message||e);
+      return;
+    }
+    return;
+  }
+
   $('status').textContent='GASから予報スナップショットを取得中…';
   $('updated').textContent='GAS接続中…';
   try{
     forecast=await getGASForecast();
     render();
-    ensureSevenDayForecast(forecast.daily||[]);
-    ensure12HourForecast();
+    await ensureSevenDayForecast(forecast.daily||[]);
+    await ensure12HourForecast();
     $('status').textContent='● GAS接続成功 / JMAナウキャスト＋通常予報を表示中 / 学習補正を時間予報に適用';
   }catch(e){
     console.error('GAS取得失敗',e);
@@ -2526,8 +2688,8 @@ const MULTI_MODEL_ENDPOINTS_V10 = {
 
 function modelApiUrlV10(cfg){
   const q =
-    '?latitude='+LAT+
-    '&longitude='+LON+
+    '?latitude='+ACTIVE_LAT+
+    '&longitude='+ACTIVE_LON+
     '&hourly=precipitation_probability,precipitation,temperature_2m,wind_speed_10m,weather_code'+
     '&forecast_hours=24&timezone=Asia%2FTokyo';
   return cfg.url + q + (cfg.params ? '&'+cfg.params : '');
@@ -2823,7 +2985,7 @@ function renderWeek(d){
 
 async function fetchOpenMeteo8Day(){
   const url='https://api.open-meteo.com/v1/forecast'
-    +'?latitude='+LAT+'&longitude='+LON
+    +'?latitude='+ACTIVE_LAT+'&longitude='+ACTIVE_LON
     +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max'
     +'&forecast_days=8&timezone=Asia%2FTokyo';
   const r=await fetch(url,{cache:'no-store'});
@@ -2921,9 +3083,9 @@ $('learnUpdate').onclick=async()=>{
 };
 
 async function setupMap(){
-  map=L.map('map',{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:true}).setView([LAT,LON],11);
+  map=L.map('map',{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:true}).setView([ACTIVE_LAT,ACTIVE_LON],11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
-  L.marker([LAT,LON]).addTo(map).bindPopup('大田区').openPopup();
+  locationMarker=L.marker([ACTIVE_LAT,ACTIVE_LON]).addTo(map).bindPopup(locationLabel).openPopup();
   await loadFrames();
 }
 async function loadFrames(){
@@ -3037,7 +3199,7 @@ $('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;show
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
 
 
-setupMap();load().then(()=>loadLearningState());
+setLocationLabels(); setupMap(); load().then(()=>loadLearningState());
 setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
 </script>
 </body>
