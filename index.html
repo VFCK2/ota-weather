@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.6</title>
+<title>OTA WEATHER v10.7</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1875,6 +1875,116 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* ===== v10.7 スマホ最終調整 ===== */
+@media (max-width:700px){
+
+  /* 上段2カードを少し余裕のある横幅で使う */
+  .hero > .card.now,
+  .hero > .card.todayCard{
+    overflow:hidden !important;
+  }
+
+  /* CURRENT / TODAY 共通の下段 */
+  .hero > .card.now .topMetrics,
+  .hero > .card.todayCard .topMetrics{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:6px !important;
+    width:100% !important;
+  }
+
+  .hero > .card.now .topMetric,
+  .hero > .card.todayCard .topMetric{
+    min-width:0 !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:9px 8px !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:baseline !important;
+    justify-content:flex-start !important;
+    gap:5px !important;
+    overflow:hidden !important;
+  }
+
+  .hero > .card.now .topMetric span,
+  .hero > .card.todayCard .topMetric span{
+    flex:0 0 auto !important;
+    font-size:9px !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+  }
+
+  .hero > .card.now .topMetric b,
+  .hero > .card.todayCard .topMetric b{
+    flex:0 1 auto !important;
+    min-width:0 !important;
+    font-size:15px !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+    overflow:visible !important;
+    text-align:left !important;
+  }
+
+  /* TODAYの最高・最低は確実に赤青、かつ切れない */
+  .hero > .card.todayCard .todayTempUnified{
+    gap:2px !important;
+    max-width:100% !important;
+    overflow:visible !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified span:first-of-type{
+    color:#d94b4b !important;
+    font-size:28px !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){
+    color:#3478c9 !important;
+    font-size:26px !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified em{
+    font-size:7px !important;
+    margin:0 1px !important;
+  }
+
+  /* 日付だけ表示 */
+  .hero > .card.todayCard .topCardDate{
+    font-size:20px !important;
+    font-weight:900 !important;
+    margin-top:2px !important;
+  }
+
+  /* 天気状態は気温の下 */
+  .hero > .card.now .topSummary,
+  .hero > .card.todayCard .topSummary{
+    margin-top:4px !important;
+    font-size:12px !important;
+  }
+
+  /* 画面が狭いiPhoneでも数値がカード外へ出ない */
+  .hero > .card.now .topWeatherText,
+  .hero > .card.todayCard .topWeatherText{
+    min-width:0 !important;
+    overflow:visible !important;
+  }
+
+  /* 12時間カードはページ幅内に収め、内部だけ横スクロール */
+  .hourlyForecastCardV9{
+    width:100% !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+  .hourlyScrollV9{
+    width:100% !important;
+    max-width:100% !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2534,7 +2644,7 @@ async function ensureSevenDayForecast(d){
 function render(){
   const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
   const today=d[0]||{};
-  $('todayLabel').textContent=today.time?'今日 · '+new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'今日';
+  $('todayLabel').textContent=today.time?new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'--/--';
   $('todayIcon').textContent=wxIcon(today.weather_code);
   $('todaySummary').textContent=wxText(today.weather_code);
   $('todayMax').textContent=Math.round(today.temperature_2m_max??0)+'°';
