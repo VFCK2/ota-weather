@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v1.2</title>
+<title>OTA WEATHER v1.3</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2361,6 +2361,197 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .hero > .card.now .topMain,
   .hero > .card.todayCard .topMain{
     min-height:108px !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   MOBILE CURRENT / TODAY v3
+   大きいクレイアイコン + 気温がカードから絶対にはみ出さない構成
+   ========================================================= */
+@media screen and (max-width:700px){
+
+  /* 2枚のカードはそのまま横並び */
+  .hero{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:8px !important;
+  }
+
+  .hero > .card.now,
+  .hero > .card.todayCard{
+    min-width:0 !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+    padding:12px 9px !important;
+  }
+
+  /* ヘッダー */
+  .hero .topCardHead{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:4px !important;
+    min-width:0 !important;
+  }
+  .hero .topCardHead .kicker{
+    min-width:0 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    font-size:10px !important;
+    letter-spacing:.04em !important;
+  }
+  .hero .topCardHead .topCardPlace{
+    flex:0 0 auto !important;
+    font-size:15px !important;
+  }
+
+  /* CURRENT / TODAY 共通メイン
+     アイコンと情報を横並びにして、各列を縮められるようにする */
+  .hero .now .topMain,
+  .hero .todayCard .topMain{
+    display:grid !important;
+    grid-template-columns:46% minmax(0,54%) !important;
+    align-items:center !important;
+    gap:0 !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:104px !important;
+    margin:6px 0 8px !important;
+  }
+
+  /* アイコンはカード幅いっぱいに近い大きさ */
+  .hero .now .topIcon,
+  .hero .todayCard .topIcon{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:96px !important;
+    min-height:96px !important;
+    flex:none !important;
+    overflow:visible !important;
+    font-size:0 !important;
+  }
+
+  .hero .now .topIcon .wxImg,
+  .hero .todayCard .topIcon .wxImg{
+    width:92px !important;
+    height:92px !important;
+    max-width:100% !important;
+    object-fit:contain !important;
+  }
+
+  /* 数値側は必ずカード内に収める */
+  .hero .now .topWeatherText,
+  .hero .todayCard .topWeatherText{
+    min-width:0 !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    align-items:flex-start !important;
+  }
+
+  /* CURRENT 気温 */
+  .hero .now .topTemp{
+    display:flex !important;
+    align-items:baseline !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    white-space:nowrap !important;
+    overflow:visible !important;
+    font-size:30px !important;
+    line-height:.95 !important;
+    letter-spacing:-.06em !important;
+    font-weight:900 !important;
+  }
+  .hero .now .topTemp small{
+    flex:0 0 auto !important;
+    font-size:10px !important;
+    letter-spacing:0 !important;
+    margin-left:2px !important;
+  }
+
+  /* TODAY 26 / 21 を1行で確実に収める */
+  .hero .todayCard .todayTempUnified{
+    display:flex !important;
+    align-items:baseline !important;
+    justify-content:flex-start !important;
+    gap:1px !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    font-size:22px !important;
+    line-height:.95 !important;
+    letter-spacing:-.07em !important;
+    font-weight:900 !important;
+  }
+  .hero .todayCard .todayTempUnified span{
+    flex:0 1 auto !important;
+    min-width:0 !important;
+    font-size:22px !important;
+  }
+  .hero .todayCard .todayTempUnified small{
+    flex:0 0 auto !important;
+    font-size:7px !important;
+    letter-spacing:-.02em !important;
+    margin:0 !important;
+  }
+  .hero .todayCard .todayTempUnified i{
+    flex:0 0 auto !important;
+    font-style:normal !important;
+    font-size:17px !important;
+    margin:0 1px !important;
+    letter-spacing:-.08em !important;
+  }
+
+  /* 天気名 */
+  .hero .now .topSummary,
+  .hero .todayCard .topSummary{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    margin-top:5px !important;
+    font-size:11px !important;
+    line-height:1.15 !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  /* 下の指標は2列にしてカード高さを圧迫しない */
+  .hero .now .topMetrics,
+  .hero .todayCard .topMetrics{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:5px !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin-top:4px !important;
+  }
+  .hero .now .topMetric,
+  .hero .todayCard .topMetric{
+    min-width:0 !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+    padding:7px 6px !important;
+    border-radius:10px !important;
+  }
+  .hero .topMetric span{
+    font-size:9px !important;
+    white-space:nowrap !important;
+  }
+  .hero .topMetric b{
+    font-size:13px !important;
+    white-space:nowrap !important;
   }
 }
 </style>
