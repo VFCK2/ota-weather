@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.5</title>
+<title>OTA WEATHER v10.6</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1756,6 +1756,121 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .hero > .card.now .topMetric span,
   .hero > .card.todayCard .topMetric span{
     font-size:10px !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== v10.6 スマホ表示最終調整 ===== */
+@media (max-width:700px){
+
+  /* TODAY: 最高/最低を明確に赤・青で表示 */
+  .hero > .card.todayCard .todayTempUnified span:first-of-type{
+    color:#d94b4b !important;
+    font-size:29px !important;
+    font-weight:900 !important;
+  }
+  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){
+    color:#3478c9 !important;
+    font-size:27px !important;
+    font-weight:900 !important;
+  }
+
+  /* 「最高」「最低」は色を付けず、小さく添える */
+  .hero > .card.todayCard .todayTempUnified em{
+    color:#607890 !important;
+    font-size:8px !important;
+    font-style:normal !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+  }
+
+  /* TODAYの気温列が折り返さないようにする */
+  .hero > .card.todayCard .todayTempUnified{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:baseline !important;
+    justify-content:flex-start !important;
+    gap:3px !important;
+    width:max-content !important;
+    max-width:100% !important;
+    white-space:nowrap !important;
+  }
+
+  /* 下段の数値もラベルと数値を分離して、変な途中改行を防ぐ */
+  .hero > .card.now .topMetric,
+  .hero > .card.todayCard .topMetric{
+    min-width:0 !important;
+    overflow:hidden !important;
+  }
+
+  .hero > .card.now .topMetric span,
+  .hero > .card.todayCard .topMetric span{
+    display:block !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+    overflow:visible !important;
+  }
+
+  .hero > .card.now .topMetric b,
+  .hero > .card.todayCard .topMetric b{
+    display:block !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+    overflow:visible !important;
+    line-height:1.05 !important;
+  }
+
+  /* 「風 2.7 km/h」「降水量 0 mm」を1つのまとまりとして見せる */
+  .hero > .card.now .topMetric,
+  .hero > .card.todayCard .topMetric{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:baseline !important;
+    justify-content:space-between !important;
+    gap:5px !important;
+    padding:10px 11px !important;
+  }
+
+  .hero > .card.now .topMetric span,
+  .hero > .card.todayCard .topMetric span{
+    flex:0 0 auto !important;
+    font-size:10px !important;
+  }
+
+  .hero > .card.now .topMetric b,
+  .hero > .card.todayCard .topMetric b{
+    flex:0 0 auto !important;
+    font-size:16px !important;
+    text-align:right !important;
+  }
+
+  /* TODAYの下段は降水確率・降水量とも横一列で見えるように */
+  .hero > .card.todayCard .topMetric{
+    gap:4px !important;
+  }
+
+  /* CURRENT/TODAYの下段ボックスを同じ高さ・位置に */
+  .hero > .card.now .topMetrics,
+  .hero > .card.todayCard .topMetrics{
+    grid-template-columns:1fr 1fr !important;
+    gap:6px !important;
+    width:100% !important;
+  }
+
+  /* 12時間予報の横スクロールは維持。カード自体を横に押し広げない */
+  .hourlyScrollV9{
+    width:100% !important;
+    max-width:100% !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  .hourlyForecastCardV9{
+    max-width:100% !important;
+    overflow:hidden !important;
   }
 }
 </style>
