@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気 | v7.1</title>
+<title>OTA WEATHER | 大田区天気 | v8.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -108,8 +108,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  .days .day{flex:0 0 132px;scroll-snap-align:start}
  
 .status{display:none !important}
-
-
+}
 
 /* ===== v3.8 DESKTOP UNIFIED DASHBOARD ===== */
 @media screen and (min-width:701px){
@@ -831,263 +830,187 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 .timelineLoading{padding:18px;color:#718096;font-weight:800;text-align:center;min-width:100%}
 
 
-/* ===== v4.0 FINAL DESKTOP: TODAY FORECAST redesign ===== */
+</style>
+
+<style>
+/* ===== v6.1 PC ONLY =====
+   CURRENT / TODAY の共通外観。
+   max-width:700px のスマホCSSには触れない。
+*/
 @media screen and (min-width:701px){
-  /* TODAYカードを現在カードとは明確に違う「今日の予報」カードへ */
-  .hero .todayCard{
-    position:relative;
-    overflow:hidden;
-    padding:24px 25px 22px;
-    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
-    border:1px solid #e5edf6;
-  }
-  .hero .todayCard::after{
-    content:"TODAY";
-    position:absolute;
-    right:18px;
-    top:13px;
-    font-size:44px;
-    line-height:1;
-    font-weight:1000;
-    letter-spacing:-.06em;
-    color:rgba(52,120,201,.055);
-    pointer-events:none;
-  }
-  .hero .todayHead{
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    min-height:76px;
-    margin:0;
-  }
-  .hero .todayCard .kicker{
-    font-size:12px;
-    letter-spacing:.12em;
-    color:#6b839c;
-    margin-bottom:7px;
-  }
-  .hero .todayLabel{
-    font-size:30px;
-    line-height:1.1;
-    font-weight:950;
-    letter-spacing:-.035em;
-    color:#18283a;
-    margin:0;
-  }
-  .hero .todayBadge{
-    display:block;
-    padding:7px 11px;
-    border-radius:999px;
-    background:#edf5ff;
-    color:#3478c9;
-    font-size:11px;
-    font-weight:900;
-    border:1px solid #dcecff;
-  }
-  .hero .todayMain{
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap:22px;
-    min-height:160px;
-    margin:4px 0 17px;
-    padding:16px 17px;
-    border-radius:20px;
-    background:#f5f9fd;
-    border:1px solid #e7eff7;
-  }
-  .hero .todayIcon{
-    flex:0 0 102px;
-    width:102px;
-    font-size:88px;
-    line-height:1;
-    text-align:center;
-  }
-  .hero .todayMain > div:last-child{
-    min-width:0;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-  }
-  .hero .todaySummary{
-    font-size:21px;
-    line-height:1.25;
-    font-weight:950;
-    color:#24384d;
-    margin:0 0 9px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .hero .todayTemp{
-    display:flex;
-    align-items:baseline;
-    gap:7px;
-    white-space:nowrap;
-  }
-  .hero .todayTemp b{
-    font-size:50px !important;
-    line-height:1;
-    font-weight:950;
-    letter-spacing:-.055em;
-  }
-  .hero .todayTemp b:first-of-type{color:#d94b4b !important}
-  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
-  .hero .todayTemp span{
-    font-size:12px;
-    line-height:1;
-    font-weight:900;
-    color:#657d95;
-    margin:0 3px 0 0;
-  }
-  .hero .todayDetails{
-    position:relative;
-    z-index:1;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin:0;
-  }
-  .hero .todayDetails > div{
-    min-height:58px;
-    padding:10px 13px;
-    border-radius:14px;
-    background:#fff;
-    border:1px solid #e4edf6;
-    box-shadow:0 3px 12px rgba(35,75,115,.04);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .hero .todayDetails span{
-    font-size:12px;
-    font-weight:850;
-    color:#607890;
-  }
-  .hero .todayDetails b{
-    font-size:20px;
-    line-height:1;
-    font-weight:950;
-    color:#20374d;
+  .hero{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.28fr) !important;
+    gap:16px !important;
   }
 
-  /* PCの12時間カードも「12枚ある」ことが一目で分かる横並び */
-  .hero + .sectionTitle + .card .timeline{
-    display:flex;
-    overflow-x:auto;
+  .hero > .now,
+  .hero > .todayCard,
+  .hero > .mapCard{
+    min-width:0 !important;
+    min-height:350px !important;
   }
-  .hero + .sectionTitle + .card .timebox{
-    flex:0 0 110px;
+
+  .hero > .now,
+  .hero > .todayCard{
+    background:linear-gradient(135deg,#fff 0%,#f5fbff 100%) !important;
+    border:1px solid var(--line) !important;
+    border-radius:20px !important;
+    box-shadow:var(--shadow) !important;
+  }
+
+  /* CURRENT / TODAY の見出し */
+  .hero > .now .kicker,
+  .hero > .todayCard .kicker{
+    font-size:13px !important;
+    line-height:1.2 !important;
+    color:#4d6680 !important;
+    font-weight:900 !important;
+    letter-spacing:.08em !important;
+  }
+
+  .hero > .now .place,
+  .hero > .todayCard .todayLabel{
+    color:#172333 !important;
+    font-weight:900 !important;
+  }
+
+  /* TODAYのメインをCURRENTと同じフラットな情報構造に */
+  .hero > .todayCard .todayMain{
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+  }
+
+  .hero > .todayCard .todayIcon,
+  .hero > .now .weatherIcon{
+    font-size:76px !important;
+  }
+
+  .hero > .todayCard .todayDetails > div,
+  .hero > .now .metric{
+    background:#f5f8fc !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+
+  .hero > .todayCard .todayDetails{
+    grid-template-columns:1fr 1fr !important;
   }
 }
 
-
-
-/* ===== v4.1 FINAL: PC TODAY + TOMORROW-7DAYS ===== */
+/* ===== v8.0 12時間グラフ / TODAY PC FINAL ===== */
+.hourlyGraphCard{padding:14px 16px 10px;overflow:hidden}
+.hourlyGraphLegend{display:flex;justify-content:flex-end;gap:14px;align-items:center;font-size:11px;color:#607890;font-weight:800;margin:0 2px 4px}
+.hourlyGraphLegend span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.hourlyGraphLegend i{display:inline-block;width:18px;height:3px;border-radius:99px}
+.hourlyGraphLegend .lgTemp{background:#df5353}
+.hourlyGraphLegend .lgRain{background:#4386d8}
+.hourlyGraphLegend .lgBar{width:10px;height:10px;border-radius:3px;background:#b9d9f7}
+.hourlyGraphScroll{width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:0 0 5px}
+#hourlyGraph{display:block;width:900px;height:235px;max-width:none;cursor:crosshair}
+.hourlyGraphHint{text-align:right;font-size:10px;color:#8a9aad;font-weight:700;margin-top:1px}
 @media screen and (min-width:701px){
-  .hero .todayCard{
+  .hero>.todayCard{
     display:flex !important;
     flex-direction:column !important;
-    justify-content:space-between !important;
-    min-height:350px !important;
-    padding:22px !important;
-    background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%) !important;
+    min-height:360px !important;
+    height:360px !important;
     overflow:hidden !important;
   }
-  .hero .todayHead{min-height:0 !important;margin-bottom:8px !important}
-  .hero .todayLabel{font-size:28px !important;font-weight:950 !important;line-height:1.1 !important}
-  .hero .todayBadge{font-size:11px !important;padding:6px 10px !important}
-  .hero .todayMain{
-    flex:1 !important;
+  .hero>.todayCard .todayHead{
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
     min-height:0 !important;
-    margin:8px 0 14px !important;
-    padding:18px !important;
+  }
+  .hero>.todayCard .todayLabel{
+    font-size:27px !important;
+    line-height:1.15 !important;
+    margin:5px 0 0 !important;
+    font-weight:900 !important;
+  }
+  .hero>.todayCard .todayMain{
+    flex:1 1 auto !important;
     display:flex !important;
     align-items:center !important;
     gap:18px !important;
-    border-radius:18px !important;
-    background:#f4f8fc !important;
+    margin:10px 0 18px !important;
+    min-height:0 !important;
   }
-  .hero .todayIcon{flex:0 0 92px !important;width:92px !important;font-size:78px !important}
-  .hero .todaySummary{font-size:22px !important;line-height:1.25 !important;margin-bottom:10px !important}
-  .hero .todayTemp{display:flex !important;align-items:baseline !important;gap:6px !important}
-  .hero .todayTemp b{font-size:42px !important;font-weight:950 !important}
-  .hero .todayTemp b:first-of-type{color:#d84b4b !important}
-  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
-  .hero .todayTemp span{font-size:11px !important;font-weight:900 !important;color:#607890 !important}
-  .hero .todayDetails{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;margin-top:0 !important}
-  .hero .todayDetails>div{background:#f1f6fb !important;border:1px solid #e1eaf3 !important;border-radius:12px !important;padding:11px 12px !important}
-  .hero .todayDetails span{font-size:12px !important;font-weight:800 !important;color:#607890 !important}
-  .hero .todayDetails b{font-size:20px !important;font-weight:950 !important}
-  .status{display:none !important}
+  .hero>.todayCard .todayIcon{
+    flex:0 0 88px !important;
+    width:88px !important;
+    font-size:76px !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+  .hero>.todayCard .todayMain>div:last-child{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+  }
+  .hero>.todayCard .todaySummary{
+    font-size:20px !important;
+    line-height:1.25 !important;
+    font-weight:900 !important;
+    margin:0 0 6px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .hero>.todayCard .todayTemp{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:8px !important;
+    white-space:nowrap !important;
+  }
+  .hero>.todayCard .todayTemp b{
+    font-size:46px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+  }
+  .hero>.todayCard .todayTemp b:first-of-type{color:#d94b4b !important}
+  .hero>.todayCard .todayTemp b:last-of-type{color:#3478c9 !important}
+  .hero>.todayCard .todayTemp span{
+    font-size:13px !important;
+    font-weight:900 !important;
+    color:#607890 !important;
+  }
+  .hero>.todayCard .todayDetails{
+    flex:none !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    margin-top:auto !important;
+  }
+  .hero>.todayCard .todayDetails>div{
+    background:#f5f8fc !important;
+    border:0 !important;
+    border-radius:13px !important;
+    padding:12px 13px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    min-height:0 !important;
+  }
+  .hero>.todayCard .todayDetails span{font-size:13px !important;color:#4b6680 !important;font-weight:800 !important}
+  .hero>.todayCard .todayDetails b{font-size:20px !important;font-weight:900 !important}
+  .hourlyGraphScroll{scrollbar-width:thin}
+  .hourlyGraphHint{display:none}
+}
+@media screen and (max-width:700px){
+  .hourlyGraphCard{padding:10px 10px 7px;border-radius:16px}
+  .hourlyGraphLegend{justify-content:flex-start;gap:9px;font-size:9px;margin:0 1px 2px}
+  .hourlyGraphLegend i{width:13px}
+  .hourlyGraphLegend .lgBar{width:8px;height:8px}
+  .hourlyGraphScroll{padding-bottom:2px;scrollbar-width:none}
+  .hourlyGraphScroll::-webkit-scrollbar{display:none}
+  #hourlyGraph{width:864px;height:165px}
+  .hourlyGraphHint{font-size:9px;text-align:center;margin-top:0}
 }
 
-/* ===== v7.0 12H GRAPH ===== */
-.hourlyGraphCard{padding:14px 16px 12px}
-.hourlyGraphLegend{
-  display:flex;
-  justify-content:flex-end;
-  align-items:center;
-  gap:16px;
-  flex-wrap:wrap;
-  margin:0 2px 8px;
-  font-size:12px;
-  font-weight:900;
-  color:#4d6680;
-}
-.graphLegendTemp{color:#d94b4b}
-.graphLegendProb{color:#3478c9}
-.graphLegendRain{color:#5c7690}
-.hourlyGraphWrap{
-  position:relative;
-  width:100%;
-  height:330px;
-  overflow-x:auto;
-  overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:thin;
-  border:1px solid var(--line);
-  border-radius:16px;
-  background:linear-gradient(180deg,#fbfdff 0%,#f6f9fc 100%);
-}
-#hourlyGraph{
-  display:block;
-  width:max(100%, 1380px);
-  height:100%;
-  touch-action:pan-y;
-}
-.hourlyGraphHint{
-  margin:7px 2px 0;
-  color:#718096;
-  font-size:11px;
-  line-height:1.45;
-}
-@media(max-width:700px){
-  .hourlyGraphCard{padding:11px 9px 10px}
-  .hourlyGraphLegend{
-    justify-content:flex-start;
-    gap:10px;
-    margin:0 1px 7px;
-    font-size:10px;
-  }
-  .hourlyGraphWrap{height:155px;border-radius:13px;overflow-x:auto;overflow-y:hidden}
-  #hourlyGraph{width:1100px;height:155px}
-  .hourlyGraphHint{
-    font-size:10px;
-    margin-top:6px;
-  }
-}
-
-
-/* v7.1 */
-@media screen and (min-width:701px){.hero{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.28fr)!important;gap:16px!important}.hero>.card{width:auto!important;min-width:0!important;margin:0!important}.hero .todayCard{display:flex!important;flex-direction:column!important;min-height:360px!important;height:360px!important;padding:22px!important;overflow:hidden!important}.hero .todayHead{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;min-height:58px!important;margin:0!important}.hero .todayLabel{font-size:29px!important;font-weight:950!important;line-height:1.1!important;margin:0!important}.hero .todayMain{flex:1!important;display:flex!important;align-items:center!important;gap:18px!important;min-height:0!important;margin:5px 0 16px!important;padding:17px!important;border-radius:18px!important;background:#f5f9fd!important;border:1px solid #e7eff7!important}.hero .todayIcon{flex:0 0 92px!important;width:92px!important;font-size:78px!important;line-height:1!important}.hero .todayMain>div:last-child{min-width:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important}.hero .todaySummary{font-size:20px!important;line-height:1.2!important;font-weight:950!important;margin:0 0 9px!important}.hero .todayTemp b{font-size:46px!important;font-weight:950!important}.hero .todayDetails{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;margin:0!important}.hero .todayDetails>div{min-height:54px!important;padding:10px 12px!important;border-radius:13px!important;display:flex!important;align-items:center!important;justify-content:space-between!important}}
-.hourlyGraphWrap::-webkit-scrollbar{height:6px}.hourlyGraphWrap::-webkit-scrollbar-track{background:#eef3f8;border-radius:99px}.hourlyGraphWrap::-webkit-scrollbar-thumb{background:#c6d5e3;border-radius:99px}
-@media screen and (max-width:700px){.hourlyGraphCard{padding:10px 8px 9px!important;border-radius:15px!important}.hourlyGraphLegend{font-size:9px!important;gap:9px!important;margin:0 2px 5px!important}.hourlyGraphHint{font-size:9px!important;margin-top:5px!important}}
 </style>
+
 </head>
 <body>
 <div class="app">
@@ -1129,17 +1052,17 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     </section>
   </div>
 
-  <div class="sectionTitle"><h2>この先12時間</h2><span>時間ごとの見通し</span></div>
+  <div class="sectionTitle"><h2>この先12時間</h2><span>1時間ごとの見通し</span></div>
   <section class="card hourlyGraphCard">
     <div class="hourlyGraphLegend">
-      <span class="graphLegendTemp">● 気温</span>
-      <span class="graphLegendProb">● 降水確率</span>
-      <span class="graphLegendRain">▮ 降水量</span>
+      <span><i class="lgTemp"></i>気温</span>
+      <span><i class="lgRain"></i>降水確率</span>
+      <span><i class="lgBar"></i>降水量</span>
     </div>
-    <div class="hourlyGraphWrap">
-      <canvas id="hourlyGraph" aria-label="この先12時間の気温・降水確率・降水量グラフ"></canvas>
+    <div class="hourlyGraphScroll" id="hourlyGraphScroll">
+      <canvas id="hourlyGraph" aria-label="この先12時間の天気グラフ"></canvas>
     </div>
-    <div class="hourlyGraphHint">時間軸の上に天気マークを表示しています。グラフをタップするとその時間の数値を確認できます。</div>
+    <div class="hourlyGraphHint">左右にスクロールできます</div>
   </section>
 
   <div class="sectionTitle"><h2>明日から7日間</h2><span>今日を除く7日間</span></div>
@@ -1301,172 +1224,148 @@ function renderHourlyCards(hourly){
     .slice(0,12);
 
   const canvas=$('hourlyGraph');
-  if(!canvas)return;
+  const wrap=$('hourlyGraphScroll');
+  if(!canvas||!wrap)return;
 
-  const wrap=canvas.parentElement;
-  const rect=wrap.getBoundingClientRect();
+  if(!future.length){
+    canvas.width=1; canvas.height=1;
+    $('hourlyGraphScroll').innerHTML='<div class="timelineLoading">12時間予報データがありません</div>';
+    return;
+  }
+
+  // 1時間ごとの間隔を狭めつつ、12時間すべてを横スクロール可能にする。
   const isMobile=window.matchMedia('(max-width:700px)').matches;
-  const cssW=isMobile?1100:Math.max(1380,Math.round(rect.width));
-  const cssH=isMobile?155:Math.max(240,Math.round(rect.height));
-  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const cssW=isMobile ? 864 : Math.max(900, wrap.clientWidth);
+  const cssH=isMobile ? 165 : 235;
+  const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
 
-  canvas.width=Math.round(cssW*dpr);
-  canvas.height=Math.round(cssH*dpr);
   canvas.style.width=cssW+'px';
   canvas.style.height=cssH+'px';
+  canvas.width=Math.round(cssW*dpr);
+  canvas.height=Math.round(cssH*dpr);
 
   const ctx=canvas.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
 
-  if(!future.length){
-    ctx.fillStyle='#718096';
-    ctx.font='800 13px -apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('12時間予報を取得中…',cssW/2,cssH/2);
-    return;
-  }
-
-  const pad={left:42,right:18,top:48,bottom:43};
-  const x0=pad.left, x1=cssW-pad.right;
-  const yTop=pad.top, yBottom=cssH-pad.bottom;
-  const plotW=Math.max(1,x1-x0), plotH=Math.max(1,yBottom-yTop);
+  const pad={l:38,r:34,t:isMobile?24:28,b:isMobile?27:31};
+  const plotW=cssW-pad.l-pad.r;
+  const plotH=cssH-pad.t-pad.b;
   const n=future.length;
-  const step=n>1?plotW/(n-1):0;
+  const step=plotW/Math.max(1,n-1);
 
-  const temps=future.map(x=>Number(x.temperature_2m));
-  const probs=future.map(x=>Number(x.precipitation_probability));
-  const rains=future.map(x=>Number(x.precipitation));
-  const finiteTemps=temps.filter(Number.isFinite);
-  const minT=Math.floor((Math.min(...(finiteTemps.length?finiteTemps:[0]))-2)/2)*2;
-  const maxT=Math.ceil((Math.max(...(finiteTemps.length?finiteTemps:[30]))+2)/2)*2;
-  const tRange=Math.max(4,maxT-minT);
+  const temps=future.map(x=>Number(x.temperature_2m??0));
+  const probs=future.map(x=>Number(x.precipitation_probability??0));
+  const rains=future.map(x=>Number(x.precipitation??0));
+  const tMin=Math.floor(Math.min(...temps)-1);
+  const tMax=Math.ceil(Math.max(...temps)+1);
+  const tRange=Math.max(4,tMax-tMin);
 
-  const tempY=v=>yBottom-(v-minT)/tRange*plotH;
-  const probY=v=>yBottom-(Math.max(0,Math.min(100,v))/100)*plotH;
-  const maxRain=Math.max(.5,...rains.filter(Number.isFinite),0);
-  const rainScale=Math.max(1,Math.ceil(maxRain*2)/2);
-  const rainBase=yBottom;
-  const rainHeight=plotH*.32;
-
-  const font='-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif';
-
-  // 背景
+  // 背景とグリッド
   ctx.fillStyle='#fbfdff';
   ctx.fillRect(0,0,cssW,cssH);
 
-  // 天気マーク帯
-  ctx.fillStyle='#4d6680';
-  ctx.font='800 10px '+font;
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-
-  future.forEach((x,i)=>{
-    const px=n>1?x0+i*step:x0+plotW/2;
-    ctx.font=(cssW<600?'20px ':'23px ')+font;
-    ctx.fillText(wxIcon(x.weather_code),px,20);
-  });
-
-  // 水平グリッド
-  ctx.strokeStyle='#e5edf5';
+  ctx.strokeStyle='#e8eef5';
   ctx.lineWidth=1;
-  const gridCount=4;
-  for(let i=0;i<=gridCount;i++){
-    const y=yTop+(plotH*i/gridCount);
-    ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+  ctx.setLineDash([3,4]);
+  for(let j=0;j<=4;j++){
+    const y=pad.t+plotH*j/4;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(cssW-pad.r,y);ctx.stroke();
   }
+  ctx.setLineDash([]);
 
-  // 左軸：気温
-  ctx.fillStyle='#d94b4b';
-  ctx.font='800 10px '+font;
-  ctx.textAlign='right';
+  // 軸ラベル
+  ctx.font=(isMobile?'9':'10')+'px -apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",sans-serif';
   ctx.textBaseline='middle';
-  for(let i=0;i<=4;i++){
-    const v=maxT-(tRange*i/4);
-    const y=tempY(v);
-    ctx.fillText(Math.round(v)+'°',x0-6,y);
+  ctx.textAlign='right';
+  ctx.fillStyle='#718096';
+  for(let j=0;j<=4;j++){
+    const val=Math.round(tMax-tRange*j/4);
+    const y=pad.t+plotH*j/4;
+    ctx.fillText(val+'°',pad.l-6,y);
   }
-
-  // 右軸：降水確率
-  ctx.fillStyle='#3478c9';
   ctx.textAlign='left';
-  [100,50,0].forEach(v=>{
-    const y=probY(v);
-    ctx.fillText(v+'%',x1+4,y);
+  ctx.fillStyle='#6f8eb0';
+  [0,50,100].forEach(v=>{
+    const y=pad.t+plotH*(1-v/100);
+    ctx.fillText(v+'%',cssW-pad.r+6,y);
   });
+
+  const xAt=i=>pad.l+step*i;
+  const yTemp=v=>pad.t+plotH*(1-(v-tMin)/tRange);
+  const yProb=v=>pad.t+plotH*(1-v/100);
 
   // 降水量バー
-  const barW=Math.max(5,Math.min(20,plotW/(n*1.7)));
-  rains.forEach((v,i)=>{
-    const val=Math.max(0,Number(v)||0);
-    const h=(val/rainScale)*rainHeight;
-    const px=n>1?x0+i*step:x0+plotW/2;
-    ctx.fillStyle='rgba(92,118,144,.28)';
-    ctx.fillRect(px-barW/2,rainBase-h,barW,h);
+  const maxRain=Math.max(1,Math.max(...rains));
+  future.forEach((item,i)=>{
+    const bh=Math.max(2,(Number(item.precipitation??0)/maxRain)*(plotH*.30));
+    const bw=Math.min(28,Math.max(12,step*.42));
+    const barX=xAt(i)-bw/2;
+    const barY=pad.t+plotH-bh;
+    ctx.fillStyle='rgba(105,165,220,.24)';
+    ctx.beginPath();
+    ctx.roundRect(barX,barY,bw,bh,4);
+    ctx.fill();
   });
 
-  // 降水確率ライン
-  ctx.strokeStyle='#3478c9';
-  ctx.lineWidth=2;
-  ctx.beginPath();
-  probs.forEach((v,i)=>{
-    const px=n>1?x0+i*step:x0+plotW/2;
-    const py=probY(Number(v)||0);
-    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
-  });
-  ctx.stroke();
-
-  // 降水確率ポイント
-  probs.forEach((v,i)=>{
-    const px=n>1?x0+i*step:x0+plotW/2;
-    const py=probY(Number(v)||0);
-    ctx.fillStyle='#fff';
-    ctx.beginPath();ctx.arc(px,py,3.5,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#3478c9';
-    ctx.beginPath();ctx.arc(px,py,2.3,0,Math.PI*2);ctx.fill();
-  });
-
-  // 気温ライン
-  ctx.strokeStyle='#d94b4b';
-  ctx.lineWidth=3;
-  ctx.lineJoin='round';
-  ctx.lineCap='round';
-  ctx.beginPath();
-  temps.forEach((v,i)=>{
-    const px=n>1?x0+i*step:x0+plotW/2;
-    const py=tempY(Number(v)||minT);
-    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
-  });
-  ctx.stroke();
-
-  // 気温ポイント
-  temps.forEach((v,i)=>{
-    const px=n>1?x0+i*step:x0+plotW/2;
-    const py=tempY(Number(v)||minT);
-    ctx.fillStyle='#fff';
-    ctx.beginPath();ctx.arc(px,py,4.5,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#d94b4b';
-    ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();
-  });
-
-  // 時刻軸
-  ctx.strokeStyle='#d8e3ed';
-  ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(x0,yBottom);ctx.lineTo(x1,yBottom);ctx.stroke();
-
+  // 小さな天気マークを時間軸の上へ
+  ctx.font=(isMobile?'18':'20')+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
   future.forEach((x,i)=>{
-    const px=n>1?x0+i*step:x0+plotW/2;
-    ctx.fillStyle='#385773';
-    ctx.font='900 '+(cssW<600?'10px ':'11px ')+font;
-    ctx.textAlign='center';
-    ctx.textBaseline='top';
-    ctx.fillText(timeHM(x.time),px,yBottom+8);
+    ctx.fillText(wxIcon(x.weather_code),xAt(i),isMobile?13:15);
   });
 
-  // 選択用データを保存
-  canvas._hourlyData={future,x0,x1,yTop,yBottom,n,step,tempY,probY};
-  canvas.dataset.count=String(future.length);
-  canvas.title='タップした時間の予報を表示';
+  // 温度線
+  ctx.strokeStyle='#df5353';
+  ctx.lineWidth=isMobile?2.2:2.6;
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.beginPath();
+  future.forEach((x,i)=>{
+    const px=xAt(i),py=yTemp(temps[i]);
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  });
+  ctx.stroke();
+
+  // 降水確率線
+  ctx.strokeStyle='#4386d8';
+  ctx.lineWidth=isMobile?1.8:2.2;
+  ctx.beginPath();
+  future.forEach((x,i)=>{
+    const px=xAt(i),py=yProb(probs[i]);
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  });
+  ctx.stroke();
+
+  // ポイント
+  future.forEach((x,i)=>{
+    const px=xAt(i);
+    ctx.fillStyle='#fff';ctx.strokeStyle='#df5353';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(px,yTemp(temps[i]),isMobile?2.8:3.2,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.strokeStyle='#4386d8';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(px,yProb(probs[i]),isMobile?2.4:2.8,0,Math.PI*2);ctx.fill();ctx.stroke();
+  });
+
+  // 時刻ラベル
+  ctx.fillStyle='#385773';
+  ctx.font=(isMobile?'10':'11')+'px -apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",sans-serif';
+  ctx.fontWeight='800';
+  ctx.textAlign='center';
+  ctx.textBaseline='alphabetic';
+  future.forEach((x,i)=>{
+    ctx.fillText(timeHM(x.time),xAt(i),cssH-8);
+  });
+
+  // クリック/タップした時間の情報をタイトル表示
+  canvas.title='12時間予報';
+  canvas.onclick=e=>{
+    const rect=canvas.getBoundingClientRect();
+    const px=e.clientX-rect.left;
+    let idx=Math.round((px-pad.l)/step);
+    idx=Math.max(0,Math.min(n-1,idx));
+    const x=future[idx];
+    canvas.title=`${timeHM(x.time)}　${wxText(x.weather_code)}　${Math.round(x.temperature_2m??0)}℃　降水確率 ${Math.round(x.precipitation_probability??0)}%　降水量 ${Number(x.precipitation??0).toFixed(1)}mm`;
+  };
 }
 
 async function fetchOpenMeteo12h(){
@@ -1711,34 +1610,11 @@ function findLatestFrameIndex(){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
-
 window.addEventListener('resize',()=>{
-  if(forecast?.hourly) renderHourlyCards(forecast.hourly);
+  if(forecast?.hourly?.length) renderHourlyCards(
+    forecast.hourly.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,12)
+  );
 });
-
-(function(){
-  const canvas=$('hourlyGraph');
-  if(!canvas)return;
-  function pick(e){
-    const d=canvas._hourlyData;
-    if(!d||!d.future?.length)return;
-    const rect=canvas.getBoundingClientRect();
-    const clientX=e.touches?e.touches[0].clientX:e.clientX;
-    const x=clientX-rect.left;
-    const idx=d.n>1
-      ? Math.max(0,Math.min(d.n-1,Math.round((x-d.x0)/d.step)))
-      : 0;
-    const v=d.future[idx];
-    const rain=Number(v.precipitation||0).toFixed(1);
-    const prob=Math.round(Number(v.precipitation_probability||0));
-    const temp=Number(v.temperature_2m||0).toFixed(1);
-    const tip=`${timeHM(v.time)}　${wxText(v.weather_code)}　気温 ${temp}℃　降水確率 ${prob}%　降水量 ${rain}mm`;
-    canvas.dataset.selected=tip;
-    canvas.title=tip;
-  }
-  canvas.addEventListener('click',pick,{passive:true});
-  canvas.addEventListener('touchend',pick,{passive:true});
-})();
 
 setupMap();load().then(()=>loadLearningState());
 setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
