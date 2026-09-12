@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.4</title>
+<title>OTA WEATHER | 大田区天気2.5</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -107,7 +107,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  .days{display:flex;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;gap:9px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
  .days .day{flex:0 0 132px;scroll-snap-align:start}
  
-.status{font-size:12px}
+.status{display:none !important}
 
 
 
@@ -985,6 +985,46 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   }
 }
 
+
+
+/* ===== v4.1 FINAL: PC TODAY + TOMORROW-7DAYS ===== */
+@media screen and (min-width:701px){
+  .hero .todayCard{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:space-between !important;
+    min-height:350px !important;
+    padding:22px !important;
+    background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%) !important;
+    overflow:hidden !important;
+  }
+  .hero .todayHead{min-height:0 !important;margin-bottom:8px !important}
+  .hero .todayLabel{font-size:28px !important;font-weight:950 !important;line-height:1.1 !important}
+  .hero .todayBadge{font-size:11px !important;padding:6px 10px !important}
+  .hero .todayMain{
+    flex:1 !important;
+    min-height:0 !important;
+    margin:8px 0 14px !important;
+    padding:18px !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:18px !important;
+    border-radius:18px !important;
+    background:#f4f8fc !important;
+  }
+  .hero .todayIcon{flex:0 0 92px !important;width:92px !important;font-size:78px !important}
+  .hero .todaySummary{font-size:22px !important;line-height:1.25 !important;margin-bottom:10px !important}
+  .hero .todayTemp{display:flex !important;align-items:baseline !important;gap:6px !important}
+  .hero .todayTemp b{font-size:42px !important;font-weight:950 !important}
+  .hero .todayTemp b:first-of-type{color:#d84b4b !important}
+  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
+  .hero .todayTemp span{font-size:11px !important;font-weight:900 !important;color:#607890 !important}
+  .hero .todayDetails{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;margin-top:0 !important}
+  .hero .todayDetails>div{background:#f1f6fb !important;border:1px solid #e1eaf3 !important;border-radius:12px !important;padding:11px 12px !important}
+  .hero .todayDetails span{font-size:12px !important;font-weight:800 !important;color:#607890 !important}
+  .hero .todayDetails b{font-size:20px !important;font-weight:950 !important}
+  .status{display:none !important}
+}
 </style>
 </head>
 <body>
@@ -1030,7 +1070,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   <div class="sectionTitle"><h2>この先12時間</h2><span>時間ごとの見通し</span></div>
   <section class="card"><div class="timeline" id="timeline"></div></section>
 
-  <div class="sectionTitle"><h2>明日から7日間</h2><span>日ごとの見通し</span></div>
+  <div class="sectionTitle"><h2>明日から7日間</h2><span>今日を除く7日間</span></div>
   <section class="card"><div class="days" id="days"></div></section>
 
   <section class="card learningCard">
@@ -1038,7 +1078,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     <div class="learningNote">過去の予報と実測を答え合わせし、1〜6時間先の降水確率を大田区向けに微調整します。今から60分は気象庁ナウキャストを優先します。</div>
   </section>
 
-  <div class="status" id="status">JMAナウキャスト＋通常予報を表示中</div>
+  <div id="status" hidden></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1172,6 +1212,7 @@ async function load(){
   try{
     forecast=await getGASForecast();
     render();
+    ensureSevenDayForecast(forecast.daily||[]);
     ensure12HourForecast();
     $('status').textContent='● GAS接続成功 / JMAナウキャスト＋通常予報を表示中 / 学習補正を時間予報に適用';
   }catch(e){
@@ -1221,6 +1262,48 @@ async function ensure12HourForecast(){
   }
 }
 
+function renderWeek(d){
+  const list=(Array.isArray(d)?d:[]).slice(1,8);
+  $('days').innerHTML=list.map(x=>{
+    const dt=new Date(x.time);
+    const md=dt.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});
+    const wd=dt.toLocaleDateString('ja-JP',{weekday:'short'});
+    return `<div class="day"><div class="d"><span>${md}</span><b>${wd}</b></div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`;
+  }).join('');
+}
+
+async function fetchOpenMeteo8Day(){
+  const url='https://api.open-meteo.com/v1/forecast'
+    +'?latitude='+LAT+'&longitude='+LON
+    +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max'
+    +'&forecast_days=8&timezone=Asia%2FTokyo';
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('Open-Meteo 7日予報 HTTP '+r.status);
+  const d=await r.json();
+  if(!d.daily||!Array.isArray(d.daily.time)) throw new Error('7日予報データなし');
+  return d.daily.time.map((time,i)=>({
+    time,
+    weather_code:Number(d.daily.weather_code?.[i]??0),
+    temperature_2m_max:Number(d.daily.temperature_2m_max?.[i]??0),
+    temperature_2m_min:Number(d.daily.temperature_2m_min?.[i]??0),
+    precipitation_sum:Number(d.daily.precipitation_sum?.[i]??0),
+    precipitation_probability_max:Number(d.daily.precipitation_probability_max?.[i]??0),
+    wind_speed_10m_max:Number(d.daily.wind_speed_10m_max?.[i]??0)
+  }));
+}
+
+async function ensureSevenDayForecast(d){
+  const future=(Array.isArray(d)?d:[]).slice(1,8);
+  if(future.length>=7){ renderWeek(d); return; }
+  try{
+    const extra=await fetchOpenMeteo8Day();
+    renderWeek(extra);
+  }catch(e){
+    console.warn('7日予報 fallback failed',e);
+    renderWeek(d);
+  }
+}
+
 function render(){
   const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
   const today=d[0]||{};
@@ -1239,7 +1322,7 @@ function render(){
   $('summary').textContent=wxText(c.weather_code);
 
   renderHourlyCards(h);
-  $('days').innerHTML=d.slice(0,7).map(x=>{const dt=new Date(x.time);const md=dt.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});const wd=dt.toLocaleDateString('ja-JP',{weekday:'short'});return `<div class="day"><div class="d"><span>${md}</span><b>${wd}</b></div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`;}).join('');
+  renderWeek(d);
   $('learningText').textContent=`学習補正 ${Number(forecast.learning_bias||0).toFixed(3)} / 累計 ${learningState.samples||0}件${learningState.accuracy!=null?' / 的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
 }
 
@@ -1263,6 +1346,7 @@ $('learnUpdate').onclick=async()=>{
   try{
     const r=await getGAS('collect',20000);
     await load();
+    await ensureSevenDayForecast(forecast?.daily||[]);
     await ensure12HourForecast();
     await loadLearningState();
     const scored=Number(r?.score?.saved||0);
