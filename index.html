@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.8</title>
+<title>OTA WEATHER | 大田区天気 v5.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2455,6 +2455,182 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .topGridV48{display:grid !important;grid-template-columns:minmax(0,1fr) !important;gap:10px !important;}
   .topGridV48 > .now,.topGridV48 > .todayForecastV49,.topGridV48 > .mapCard{grid-column:auto !important;width:100% !important;}
 }
+
+/* =========================================================
+   v5.2: スマホでも上段3カードを横並び
+   3枚とも同じ行に収め、内容はスマホ用にコンパクト化。
+   ========================================================= */
+@media screen and (max-width:700px){
+  .app{
+    padding:14px 8px 30px !important;
+  }
+
+  .topGridV48{
+    display:grid !important;
+    grid-template-columns:minmax(0,0.9fr) minmax(0,1fr) minmax(0,1.12fr) !important;
+    gap:6px !important;
+    width:100% !important;
+    align-items:stretch !important;
+  }
+
+  .topGridV48 > .now,
+  .topGridV48 > .todayForecastV49,
+  .topGridV48 > .mapCard{
+    grid-column:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding:10px 8px !important;
+    border-radius:14px !important;
+    overflow:hidden !important;
+  }
+
+  /* CURRENT WEATHER */
+  .topGridV48 .now .kicker{
+    font-size:8px !important;
+    letter-spacing:.05em !important;
+    white-space:nowrap !important;
+  }
+  .topGridV48 .now .place{
+    font-size:18px !important;
+    margin:3px 0 8px !important;
+  }
+  .topGridV48 .now .currentRow{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:2px !important;
+  }
+  .topGridV48 .now .weatherIcon{
+    font-size:38px !important;
+  }
+  .topGridV48 .now .temp{
+    font-size:30px !important;
+    letter-spacing:-.05em !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+  }
+  .topGridV48 .now .temp small{
+    font-size:11px !important;
+  }
+  .topGridV48 .now .summary{
+    font-size:10px !important;
+    line-height:1.25 !important;
+    text-align:center !important;
+    white-space:normal !important;
+  }
+  .topGridV48 .now .metrics{
+    grid-template-columns:1fr !important;
+    gap:5px !important;
+    margin-top:8px !important;
+  }
+  .topGridV48 .now .metric{
+    padding:7px 6px !important;
+    border-radius:9px !important;
+  }
+  .topGridV48 .now .metric span{
+    font-size:8px !important;
+  }
+  .topGridV48 .now .metric b{
+    font-size:13px !important;
+  }
+
+  /* TODAY FORECAST */
+  .topGridV48 .todayForecastV49 > div:nth-child(2){
+    margin-bottom:6px !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(2) > div:first-child > div:first-child{
+    font-size:8px !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(2) > div:first-child > div:last-child{
+    font-size:16px !important;
+    white-space:nowrap !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(2) > div:last-child{
+    font-size:0 !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(3){
+    min-height:155px !important;
+    padding:10px 6px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(3) > div{
+    transform:scale(.72) !important;
+    transform-origin:center !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(4){
+    grid-template-columns:1fr !important;
+    gap:5px !important;
+    margin-top:6px !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(4) > div{
+    padding:7px 6px !important;
+    border-radius:9px !important;
+  }
+  .topGridV48 .todayForecastV49 > div:nth-child(4) strong{
+    font-size:14px !important;
+  }
+
+  /* JMA NOWCAST */
+  .topGridV48 .mapCard .mapSectionTitle{
+    gap:3px !important;
+    align-items:flex-start !important;
+  }
+  .topGridV48 .mapCard .mapSectionTitle b{
+    font-size:14px !important;
+    white-space:nowrap !important;
+  }
+  .topGridV48 .mapCard .mapSectionTitle span{
+    font-size:7px !important;
+    line-height:1.2 !important;
+    text-align:right !important;
+  }
+  .topGridV48 .mapCard .mapTop{
+    display:block !important;
+    margin:5px 0 !important;
+  }
+  .topGridV48 .mapCard .mapTop b{
+    font-size:10px !important;
+  }
+  .topGridV48 .mapCard .mapTop span{
+    display:block !important;
+    font-size:7px !important;
+    line-height:1.2 !important;
+    margin-top:2px !important;
+  }
+  .topGridV48 .mapCard #map{
+    height:155px !important;
+    min-height:155px !important;
+    border-radius:10px !important;
+  }
+  .topGridV48 .mapCard .mapControls{
+    gap:3px !important;
+    margin-top:5px !important;
+  }
+  .topGridV48 .mapCard .mapControls button{
+    padding:5px 5px !important;
+    font-size:9px !important;
+    white-space:nowrap !important;
+  }
+  .topGridV48 .mapCard .mapTime{
+    font-size:8px !important;
+    white-space:nowrap !important;
+  }
+  .topGridV48 .mapCard .note{
+    font-size:7px !important;
+    line-height:1.25 !important;
+    margin-top:5px !important;
+  }
+
+  /* 上段カードの高さを揃える */
+  .topGridV48 > .card{
+    min-height:0 !important;
+  }
+}
+
 </style>
 </head>
 <body>
