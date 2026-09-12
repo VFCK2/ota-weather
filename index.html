@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.9</title>
+<title>OTA WEATHER v11.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2062,6 +2062,133 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* ===== v11.0 CURRENT / TODAY 気温サイズ統一 + スマホ下段2段表示 ===== */
+@media (min-width:701px){
+  .hero > .card.now .topTemp,
+  .hero > .card.todayCard .todayTempUnified{
+    font-family:inherit !important;
+    font-size:54px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    letter-spacing:-.045em !important;
+    white-space:nowrap !important;
+    display:flex !important;
+    align-items:baseline !important;
+  }
+  .hero > .card.now .topTemp small,
+  .hero > .card.todayCard .todayTempUnified small{
+    font-size:18px !important;
+    font-weight:900 !important;
+    margin-left:2px !important;
+    color:inherit !important;
+  }
+  .hero > .card.todayCard .todayTempUnified span:first-of-type{color:#d94b4b !important}
+  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){color:#3478c9 !important}
+  .hero > .card.todayCard .todayTempUnified i{
+    font-style:normal !important;
+    color:#607890 !important;
+    font-size:34px !important;
+    font-weight:900 !important;
+    margin:0 5px !important;
+  }
+}
+
+@media (max-width:700px){
+  /* CURRENT / TODAYの気温本体を同じサイズに */
+  .hero > .card.now .topTemp,
+  .hero > .card.todayCard .todayTempUnified{
+    font-family:inherit !important;
+    font-size:30px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    letter-spacing:-.045em !important;
+    white-space:nowrap !important;
+    display:flex !important;
+    align-items:baseline !important;
+  }
+
+  .hero > .card.now .topTemp small,
+  .hero > .card.todayCard .todayTempUnified small{
+    font-size:12px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    margin-left:1px !important;
+    color:inherit !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified{
+    gap:0 !important;
+    width:max-content !important;
+    max-width:100% !important;
+  }
+  .hero > .card.todayCard .todayTempUnified span:first-of-type{
+    color:#d94b4b !important;
+  }
+  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){
+    color:#3478c9 !important;
+  }
+  .hero > .card.todayCard .todayTempUnified i{
+    font-style:normal !important;
+    color:#607890 !important;
+    font-size:20px !important;
+    font-weight:900 !important;
+    margin:0 3px !important;
+  }
+
+  /* 下段情報は「ラベル」→「数値」の2段にする。
+     数値がカード幅に押されて途中で切れないようにする。 */
+  .hero > .card.now .topMetric,
+  .hero > .card.todayCard .topMetric{
+    min-width:0 !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:9px 10px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:center !important;
+    gap:4px !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+  }
+
+  .hero > .card.now .topMetric span,
+  .hero > .card.todayCard .topMetric span{
+    display:block !important;
+    flex:none !important;
+    width:auto !important;
+    font-size:10px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+  }
+
+  .hero > .card.now .topMetric b,
+  .hero > .card.todayCard .topMetric b{
+    display:block !important;
+    flex:none !important;
+    width:auto !important;
+    max-width:100% !important;
+    font-size:16px !important;
+    line-height:1.05 !important;
+    white-space:nowrap !important;
+    word-break:keep-all !important;
+    overflow:visible !important;
+    text-align:left !important;
+    letter-spacing:-.02em !important;
+  }
+
+  .hero > .card.now .topMetrics,
+  .hero > .card.todayCard .topMetrics{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:6px !important;
+    width:100% !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2094,7 +2221,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="topMain">
         <div class="topIcon" id="todayIcon">☀️</div>
         <div class="topWeatherText">
-          <div class="topTemp todayTempUnified"><span id="todayMax">--℃</span><i>/</i><span id="todayMin">--℃</span></div>
+          <div class="topTemp todayTempUnified"><span id="todayMax">--</span><small>℃</small><i>/</i><span id="todayMin">--</span><small>℃</small></div>
           <div class="topSummary" id="todaySummary">取得中…</div>
         </div>
       </div>
@@ -2724,8 +2851,8 @@ function render(){
   $('todayLabel').textContent=today.time?new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'--/--';
   $('todayIcon').textContent=wxIcon(today.weather_code);
   $('todaySummary').textContent=wxText(today.weather_code);
-  $('todayMax').textContent=Math.round(today.temperature_2m_max??0)+'℃';
-  $('todayMin').textContent=Math.round(today.temperature_2m_min??0)+'℃';
+  $('todayMax').textContent=Math.round(today.temperature_2m_max??0);
+  $('todayMin').textContent=Math.round(today.temperature_2m_min??0);
   $('todayRain').textContent=pct(today.precipitation_probability_max);
   $('todayPrecip').textContent=Number(today.precipitation_sum??0).toFixed(1)+' mm';
   $('updated').textContent='更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
