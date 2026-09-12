@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v12.1</title>
+<title>OTA WEATHER v12.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2234,6 +2234,56 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 #todayLabel{display:none !important}
 </style>
 
+
+<style>
+/* ===== CUTE MINIMAL WEATHER ICONS ===== */
+.wxImg{
+  display:block;
+  width:1em;
+  height:1em;
+  object-fit:contain;
+  flex:none;
+}
+.topIcon .wxImg{
+  width:82px;
+  height:82px;
+  margin:auto;
+}
+.hfWxV9 .wxImg{
+  width:34px;
+  height:34px;
+  margin:auto;
+}
+.day .ico .wxImg{
+  width:50px;
+  height:50px;
+  margin:auto;
+}
+@media screen and (max-width:700px){
+  .hero .topIcon .wxImg{
+    width:48px;
+    height:48px;
+  }
+  .timeline .hfWxV9 .wxImg{
+    width:38px;
+    height:38px;
+  }
+  .days .day .ico .wxImg{
+    width:48px;
+    height:48px;
+  }
+}
+</style>
+
+
+<style>
+.hero .topIcon{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2337,7 +2387,23 @@ let learningState={bias:0,samples:0,accuracy:null};
 const $=id=>document.getElementById(id);
 function pct(v){return v==null||isNaN(v)?"--":Math.round(Number(v))+"%"}
 function timeHM(s){try{return new Date(s).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}catch(e){return "--:--"}}
-function wxIcon(code){code=Number(code);if(code===0)return"☀️";if(code<=3)return"🌤️";if(code<=48)return"☁️";if(code<=67)return"🌧️";if(code<=77)return"🌨️";if(code<=82)return"🌦️";return"⛈️"}
+function wxIcon(code,isDay=1){
+  code=Number(code);
+  const day=Number(isDay)!==0;
+  let name="cloudy";
+  if(code===0) name=day?"sunny":"night-clear";
+  else if(code===1) name=day?"partly-cloudy":"night-cloudy";
+  else if(code===2) name=day?"partly-cloudy":"night-cloudy";
+  else if(code===3) name="cloudy";
+  else if(code===45||code===48) name="fog";
+  else if(code>=51&&code<=57) name=day?"light-rain":"night-rain";
+  else if(code>=61&&code<=67) name=day?"rain":"night-rain";
+  else if(code>=71&&code<=77) name=day?"snow":"night-snow";
+  else if(code>=80&&code<=82) name=day?"shower":"night-rain";
+  else if(code===85||code===86) name=day?"heavy-snow":"night-snow";
+  else if(code>=95) name="thunderstorm";
+  return '<img class="wxImg" src="icons/'+name+'.png" alt="'+wxText(code)+'" loading="eager">';
+}
 function wxText(code){code=Number(code);if(code===0)return"晴れ";if(code<=3)return"晴れ時々くもり";if(code<=48)return"くもり";if(code<=67)return"雨";if(code<=77)return"雪";if(code<=82)return"にわか雨";return"雷雨"}
 
 function normalizeGAS(d){
@@ -3059,7 +3125,7 @@ function render(){
   const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
   const today=getTodayDaily(d);
   $('todayLabel').textContent=today.time?new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'--/--';
-  $('todayIcon').textContent=wxIcon(today.weather_code);
+  $('todayIcon').innerHTML=wxIcon(today.weather_code,1);
   $('todaySummary').textContent=wxText(today.weather_code);
   $('todayMax').textContent=Math.round(today.temperature_2m_max??0);
   $('todayMin').textContent=Math.round(today.temperature_2m_min??0);
@@ -3069,7 +3135,7 @@ function render(){
   $('temp').innerHTML=(c.temperature_2m??'--')+'<small>℃</small>';
   $('wind').textContent=(c.wind_speed_10m??'--')+' km/h';
   $('rainNow').textContent=(c.precipitation??0)+' mm';
-  $('icon').textContent=wxIcon(c.weather_code);
+  $('icon').innerHTML=wxIcon(c.weather_code,c.is_day);
   $('summary').textContent=wxText(c.weather_code);
 
   renderWeek(d);
