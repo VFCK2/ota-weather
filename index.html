@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.4</title>
+<title>OTA WEATHER v10.5</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1465,6 +1465,301 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* ===== v10.5 CURRENT / TODAY 完全統一 ===== */
+@media (min-width:701px){
+  .hero > .card.now,
+  .hero > .card.todayCard{
+    box-sizing:border-box !important;
+    min-height:360px !important;
+    height:360px !important;
+    padding:20px !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  .hero > .card.now .topCardHead,
+  .hero > .card.todayCard .topCardHead{
+    height:50px !important;
+    flex:0 0 50px !important;
+    display:flex !important;
+    align-items:flex-start !important;
+    justify-content:space-between !important;
+  }
+
+  .hero > .card.now .kicker,
+  .hero > .card.todayCard .kicker{
+    font-size:14px !important;
+    line-height:1.15 !important;
+    margin:0 !important;
+  }
+
+  .hero > .card.now .topCardPlace,
+  .hero > .card.todayCard .topCardPlace{
+    font-size:14px !important;
+    color:#33475b !important;
+    margin-top:0 !important;
+  }
+
+  .hero > .card.now .topCardDate,
+  .hero > .card.todayCard .topCardDate{
+    font-size:27px !important;
+    font-weight:900 !important;
+    line-height:1.1 !important;
+    margin-top:5px !important;
+  }
+
+  .hero > .card.now .topMain,
+  .hero > .card.todayCard .topMain{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:18px !important;
+    margin:0 !important;
+  }
+
+  .hero > .card.now .topIcon,
+  .hero > .card.todayCard .topIcon{
+    flex:0 0 82px !important;
+    width:82px !important;
+    text-align:center !important;
+    font-size:72px !important;
+    line-height:1 !important;
+  }
+
+  .hero > .card.now .topWeatherText,
+  .hero > .card.todayCard .topWeatherText{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+  }
+
+  .hero > .card.now .topTemp,
+  .hero > .card.todayCard .topTemp{
+    order:1 !important;
+    margin:0 !important;
+    padding:0 !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+
+  .hero > .card.now .topTemp{
+    font-size:62px !important;
+    font-weight:900 !important;
+    letter-spacing:-.04em !important;
+  }
+
+  .hero > .card.now .topTemp small{
+    font-size:20px !important;
+    font-weight:900 !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:7px !important;
+    font-size:44px !important;
+    font-weight:900 !important;
+    letter-spacing:-.04em !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified span:first-of-type{
+    color:#d94b4b !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){
+    color:#3478c9 !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified em{
+    font-style:normal !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+    color:#607890 !important;
+    letter-spacing:0 !important;
+  }
+
+  /* 天気の状態は必ず気温の下 */
+  .hero > .card.now .topSummary,
+  .hero > .card.todayCard .topSummary{
+    order:2 !important;
+    margin:7px 0 0 !important;
+    font-size:19px !important;
+    line-height:1.2 !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .hero > .card.now .topMetrics,
+  .hero > .card.todayCard .topMetrics{
+    flex:0 0 74px !important;
+    height:74px !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    margin:0 !important;
+  }
+
+  .hero > .card.now .topMetric,
+  .hero > .card.todayCard .topMetric{
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    padding:14px !important;
+    border-radius:12px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    gap:4px !important;
+    background:#f4f8fc !important;
+  }
+
+  .hero > .card.now .topMetric span,
+  .hero > .card.todayCard .topMetric span{
+    font-size:12px !important;
+    color:#607890 !important;
+  }
+
+  .hero > .card.now .topMetric b,
+  .hero > .card.todayCard .topMetric b{
+    font-size:20px !important;
+    line-height:1.05 !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+  }
+}
+
+@media (max-width:700px){
+  .hero > .card.now,
+  .hero > .card.todayCard{
+    box-sizing:border-box !important;
+    padding:14px !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  .hero > .card.now .topCardHead,
+  .hero > .card.todayCard .topCardHead{
+    display:flex !important;
+    align-items:flex-start !important;
+    justify-content:space-between !important;
+    min-height:42px !important;
+  }
+
+  .hero > .card.now .topCardPlace,
+  .hero > .card.todayCard .topCardPlace{
+    font-size:12px !important;
+  }
+
+  .hero > .card.now .topCardDate,
+  .hero > .card.todayCard .topCardDate{
+    font-size:18px !important;
+    font-weight:900 !important;
+    margin-top:2px !important;
+  }
+
+  .hero > .card.now .topMain,
+  .hero > .card.todayCard .topMain{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    flex:1 1 auto !important;
+    min-height:88px !important;
+    margin:0 !important;
+  }
+
+  .hero > .card.now .topIcon,
+  .hero > .card.todayCard .topIcon{
+    flex:0 0 48px !important;
+    width:48px !important;
+    font-size:43px !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+
+  .hero > .card.now .topWeatherText,
+  .hero > .card.todayCard .topWeatherText{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+  }
+
+  .hero > .card.now .topTemp{
+    font-size:34px !important;
+    line-height:1 !important;
+  }
+
+  .hero > .card.now .topTemp small{
+    font-size:12px !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:3px !important;
+    font-size:27px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified em{
+    font-size:8px !important;
+    color:#607890 !important;
+    font-style:normal !important;
+    margin:0 1px !important;
+  }
+
+  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){
+    font-size:24px !important;
+  }
+
+  .hero > .card.now .topSummary,
+  .hero > .card.todayCard .topSummary{
+    order:2 !important;
+    margin:4px 0 0 !important;
+    font-size:12px !important;
+    line-height:1.2 !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .hero > .card.now .topMetrics,
+  .hero > .card.todayCard .topMetrics{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:6px !important;
+    flex:0 0 auto !important;
+    height:auto !important;
+  }
+
+  .hero > .card.now .topMetric,
+  .hero > .card.todayCard .topMetric{
+    padding:9px !important;
+    border-radius:10px !important;
+    background:#f4f8fc !important;
+  }
+
+  .hero > .card.now .topMetric b,
+  .hero > .card.todayCard .topMetric b{
+    font-size:15px !important;
+  }
+
+  .hero > .card.now .topMetric span,
+  .hero > .card.todayCard .topMetric span{
+    font-size:10px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -1472,24 +1767,38 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
   <div class="hero">
     <section class="card now">
-      <div class="kicker">CURRENT WEATHER</div>
-      <div class="place">大田区</div>
-      <div class="currentRow"><div class="weatherIcon" id="icon">☁️</div><div><div class="temp" id="temp">--<small>℃</small></div><div class="summary" id="summary">取得中…</div></div></div>
-      <div class="metrics">
-        <div class="metric"><span>風</span><b id="wind">--</b></div>
-        <div class="metric"><span>降水量</span><b id="rainNow">--</b></div>
+      <div class="topCardHead"><div class="kicker">CURRENT WEATHER</div><div class="topCardPlace">大田区</div></div>
+      <div class="topMain">
+        <div class="topIcon" id="icon">☁️</div>
+        <div class="topWeatherText">
+          <div class="topTemp" id="temp">--<small>℃</small></div>
+          <div class="topSummary" id="summary">取得中…</div>
+        </div>
+      </div>
+      <div class="topMetrics">
+        <div class="topMetric"><span>風</span><b id="wind">--</b></div>
+        <div class="topMetric"><span>降水量</span><b id="rainNow">--</b></div>
       </div>
     </section>
 
     <section class="card todayCard">
-      <div class="todayHead"><div><div class="kicker">TODAY FORECAST</div><div class="todayLabel" id="todayLabel">今日</div></div><div class="todayBadge">大田区</div></div>
-      <div class="todayMain">
-        <div class="todayIcon" id="todayIcon">☀️</div>
-        <div><div class="todayTemp"><b id="todayMax">--</b><span>最高</span><b id="todayMin">--</b><span>最低</span></div><div class="todaySummary" id="todaySummary">取得中…</div></div>
+      <div class="topCardHead">
+        <div>
+          <div class="kicker">TODAY FORECAST</div>
+          <div class="topCardDate" id="todayLabel">今日</div>
+        </div>
+        <div class="topCardPlace">大田区</div>
       </div>
-      <div class="todayDetails">
-        <div><span>降水確率</span><b id="todayRain">--</b></div>
-        <div><span>降水量</span><b id="todayPrecip">--</b></div>
+      <div class="topMain">
+        <div class="topIcon" id="todayIcon">☀️</div>
+        <div class="topWeatherText">
+          <div class="topTemp todayTempUnified"><span id="todayMax">--</span><em>最高</em><span id="todayMin">--</span><em>最低</em></div>
+          <div class="topSummary" id="todaySummary">取得中…</div>
+        </div>
+      </div>
+      <div class="topMetrics">
+        <div class="topMetric"><span>降水確率</span><b id="todayRain">--</b></div>
+        <div class="topMetric"><span>降水量</span><b id="todayPrecip">--</b></div>
       </div>
     </section>
     <section class="card mapCard">
