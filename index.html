@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.7</title>
+<title>OTA WEATHER | 大田区天気2.8</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2445,6 +2445,16 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   box-sizing:border-box !important;
 }
 
+
+/* v5.1: desktop 3-card layout is applied by a tiny runtime guard too. */
+@media screen and (min-width:701px){
+  .topGridV48{display:grid !important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.18fr) !important;gap:16px !important;align-items:stretch !important;}
+  .topGridV48 > .now,.topGridV48 > .todayForecastV49,.topGridV48 > .mapCard{grid-column:auto !important;width:auto !important;min-width:0 !important;margin:0 !important;}
+}
+@media screen and (max-width:700px){
+  .topGridV48{display:grid !important;grid-template-columns:minmax(0,1fr) !important;gap:10px !important;}
+  .topGridV48 > .now,.topGridV48 > .todayForecastV49,.topGridV48 > .mapCard{grid-column:auto !important;width:100% !important;}
+}
 </style>
 </head>
 <body>
@@ -2534,6 +2544,27 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  function forceTopCards(){
+    var g=document.querySelector('.topGridV48');
+    if(!g) return;
+    var desktop=window.innerWidth>700;
+    g.style.setProperty('display','grid','important');
+    g.style.setProperty('grid-template-columns', desktop ? 'minmax(0,1fr) minmax(0,1fr) minmax(0,1.18fr)' : 'minmax(0,1fr)','important');
+    g.style.setProperty('gap', desktop ? '16px' : '10px','important');
+    var cards=g.children;
+    for(var i=0;i<cards.length;i++){
+      cards[i].style.setProperty('grid-column','auto','important');
+      cards[i].style.setProperty('min-width','0','important');
+      cards[i].style.setProperty('width',desktop?'auto':'100%','important');
+      cards[i].style.setProperty('margin','0','important');
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',forceTopCards); else forceTopCards();
+  window.addEventListener('resize',forceTopCards);
+})();
+</script>
 <script>
 const GAS_URL="https://script.google.com/macros/s/AKfycbxNgg7izI18Yxk36hyzfGe8GhVUlQvXKCbkKSIcMRtKUEwsjTvZcFUNxoqqLQFLoJJMng/exec";
 const LAT=35.5613, LON=139.7161;
