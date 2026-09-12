@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気v9.0</title>
+<title>OTA WEATHER 大田区天気v9.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1132,6 +1132,67 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .hourlyScrollHintV9{display:block}
 }
 
+
+/* ===== v9.1 12時間予報 調整 ===== */
+@media screen and (min-width:701px){
+  .hourlyForecastV9{
+    grid-template-columns:92px repeat(12,104px) !important;
+    width:1340px !important;
+    min-width:1340px !important;
+    grid-template-rows:30px 52px 70px 47px 47px !important;
+  }
+  .hfLabelV9{font-size:12px !important}
+  .hfTimeV9{font-size:12px !important}
+  .hfWxV9{font-size:30px !important}
+  .hfTempV9{font-size:16px !important}
+  .hfRainV9{font-size:12px !important}
+  .hfWindV9{font-size:12px !important}
+  .hfTempPlotV9{
+    left:92px !important;
+    width:1248px !important;
+    top:82px !important;
+    height:42px !important;
+  }
+  .hourlyScrollHintV9{display:none !important}
+}
+@media screen and (max-width:700px){
+  .hourlyForecastCardV9{
+    min-height:226px !important;
+  }
+  .hourlyForecastV9{
+    grid-template-columns:55px repeat(12,78px) !important;
+    width:991px !important;
+    min-width:991px !important;
+    grid-template-rows:27px 43px 58px 40px 40px !important;
+  }
+  .hfTempPlotV9{
+    left:55px !important;
+    width:936px !important;
+    top:70px !important;
+    height:38px !important;
+  }
+}
+
+/* 読み込み中も12時間カードの高さ・骨格を固定して、ガクッと崩れないようにする */
+.hourlyLoadingStableV91{
+  height:208px;
+  min-width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  color:#8293a6;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+@media screen and (max-width:700px){
+  .hourlyLoadingStableV91{
+    height:208px;
+    font-size:11px;
+  }
+}
+
 </style>
 
 </head>
@@ -1429,22 +1490,42 @@ async function ensure12HourForecast(){
   const h=forecast?.hourly||[];
   const available=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000);
 
-  // GAS側の配列が6時間程度しかない場合でも、ここで必ず24時間取得して12件を確保する。
+  // 12件そろっている場合だけ、そのまま表示。
+  // 6件程度しかないGASデータを一度表示してから12件に差し替えると、
+  // スマホでカード幅が一瞬変わって「崩れた」ように見えるため、部分表示はしない。
   if(available.length>=12){
-    renderHourlyCards(available);
+    renderHourlyCards(available.slice(0,12));
     return;
   }
 
+  const root=$('hourlyForecastV9');
+  if(root && !root.dataset.loadingStarted){
+    root.dataset.loadingStarted='1';
+    root.innerHTML='<div class="hourlyLoadingStableV91">12時間予報を取得中…</div>';
+  }
+
   try{
-    const root=$('hourlyForecastV9');
-    if(root) root.innerHTML='<div class="timelineLoading">12時間予報を取得中…</div>';
     const extra=await fetchOpenMeteo12h();
-    const extraFuture=extra.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,12);
-    renderHourlyCards(extraFuture);
-    if(root) root.dataset.source='open-meteo-direct';
+    const extraFuture=extra
+      .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+      .slice(0,12);
+
+    if(extraFuture.length>=12){
+      renderHourlyCards(extraFuture);
+      if(root) root.dataset.source='open-meteo-direct';
+      return;
+    }
+
+    // 万一12件取れない場合は、取れたデータだけを無理に表示せず
+    // 既存の6時間程度のデータを最後のフォールバックとして表示。
+    if(available.length){
+      renderHourlyCards(available.slice(0,12));
+    }
   }catch(e){
     console.warn('12時間予報 fallback failed',e);
-    renderHourlyCards(available.slice(0,12));
+    if(available.length){
+      renderHourlyCards(available.slice(0,12));
+    }
   }
 }
 
@@ -1657,10 +1738,16 @@ function findLatestFrameIndex(){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
+let hourlyResizeTimer=null;
 window.addEventListener('resize',()=>{
-  if(forecast?.hourly?.length){
-    ensure12HourForecast();
-  }
+  clearTimeout(hourlyResizeTimer);
+  hourlyResizeTimer=setTimeout(()=>{
+    if(forecast?.hourly?.length){
+      const root=$('hourlyForecastV9');
+      if(root) delete root.dataset.loadingStarted;
+      ensure12HourForecast();
+    }
+  },180);
 });
 
 setupMap();load().then(()=>loadLearningState());
