@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v12.0</title>
+<title>OTA WEATHER v12.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2228,6 +2228,12 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* ===== v12.1 GPS時の「今日」データ反映を安定化 ===== */
+#todayLabel{display:none !important}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2463,6 +2469,40 @@ async function fetchLocationForecast(){
   return d;
 }
 
+function normalizeLocationForecast(d){
+  // GPS/Open-Meteoのレスポンスを、GAS予報と同じ扱いにする。
+  const daily=d.daily||{};
+  const hourly=d.hourly||{};
+  return {
+    current:d.current||{},
+    hourly:{
+      time:Array.isArray(hourly.time)?hourly.time:[],
+      precipitation_probability:Array.isArray(hourly.precipitation_probability)?hourly.precipitation_probability:[],
+      precipitation:Array.isArray(hourly.precipitation)?hourly.precipitation:[],
+      temperature_2m:Array.isArray(hourly.temperature_2m)?hourly.temperature_2m:[],
+      relative_humidity_2m:Array.isArray(hourly.relative_humidity_2m)?hourly.relative_humidity_2m:[],
+      wind_speed_10m:Array.isArray(hourly.wind_speed_10m)?hourly.wind_speed_10m:[],
+      weather_code:Array.isArray(hourly.weather_code)?hourly.weather_code:[]
+    },
+    daily:Array.isArray(daily.time) ? daily.time.map((time,i)=>({
+      time,
+      weather_code:Number(daily.weather_code?.[i]??0),
+      temperature_2m_max:Number(daily.temperature_2m_max?.[i]??0),
+      temperature_2m_min:Number(daily.temperature_2m_min?.[i]??0),
+      precipitation_sum:Number(daily.precipitation_sum?.[i]??0),
+      precipitation_probability_max:Number(daily.precipitation_probability_max?.[i]??0),
+      wind_speed_10m_max:Number(daily.wind_speed_10m_max?.[i]??0)
+    })) : []
+  };
+}
+
+function getTodayDaily(daily){
+  const list=Array.isArray(daily)?daily:[];
+  const key=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo'}).format(new Date());
+  return list.find(x=>String(x.time).slice(0,10)===key) || list[0] || {};
+}
+
+
 function setLocationLabels(){
   document.querySelectorAll('.topCardPlace').forEach(el=>{
     el.textContent=locationLabel;
@@ -2506,7 +2546,7 @@ async function useGpsLocation(){
       setLocationLabels();
 
       // 予報表示は現在地へ切り替える。学習データは大田区側を使い続ける。
-      forecast=await fetchLocationForecast();
+      forecast=normalizeLocationForecast(await fetchLocationForecast());
       hourlyForecastLoadedV92=false;
       hourlyForecastLoadingV92=false;
       render();
@@ -2557,7 +2597,7 @@ async function load(){
     $('status').textContent='現在地の予報を取得中…';
     $('updated').textContent='現在地取得中…';
     try{
-      forecast=await fetchLocationForecast();
+      forecast=normalizeLocationForecast(await fetchLocationForecast());
       render();
       await ensureSevenDayForecast(forecast.daily||[]);
       await ensure12HourForecast();
@@ -3017,7 +3057,7 @@ async function ensureSevenDayForecast(d){
 
 function render(){
   const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
-  const today=d[0]||{};
+  const today=getTodayDaily(d);
   $('todayLabel').textContent=today.time?new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'--/--';
   $('todayIcon').textContent=wxIcon(today.weather_code);
   $('todaySummary').textContent=wxText(today.weather_code);
