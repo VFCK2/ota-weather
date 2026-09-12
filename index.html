@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v11.0</title>
+<title>OTA WEATHER v11.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2189,6 +2189,14 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* ===== v11.1 TODAYの日付表示を削除 ===== */
+.hero > .card.todayCard .topCardDate{
+  display:none !important;
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2214,7 +2222,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="topCardHead">
         <div>
           <div class="kicker">TODAY FORECAST</div>
-          <div class="topCardDate" id="todayLabel">今日</div>
+          <div class="topCardDate" id="todayLabel" aria-hidden="true"></div>
         </div>
         <div class="topCardPlace">大田区</div>
       </div>
