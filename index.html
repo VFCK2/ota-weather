@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.8</title>
+<title>OTA WEATHER v10.9</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1987,93 +1987,77 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
 
 <style>
-/* ===== v10.8 ℃表記 + スマホ文字切れ最終修正 ===== */
-@media (max-width:700px){
-
-  /* TODAY: 最高/最低を明確に。℃も表示 */
+/* ===== v10.9 CURRENT / TODAY 気温フォント完全統一 ===== */
+@media (min-width:701px){
+  .hero > .card.now .topTemp,
   .hero > .card.todayCard .todayTempUnified{
-    display:flex !important;
-    flex-wrap:nowrap !important;
-    align-items:baseline !important;
-    gap:2px !important;
-    width:max-content !important;
-    max-width:100% !important;
+    font-family:inherit !important;
+    font-size:54px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    letter-spacing:-.045em !important;
     white-space:nowrap !important;
+    display:flex !important;
+    align-items:baseline !important;
+  }
+  .hero > .card.now .topTemp small{
+    font-size:18px !important;
+    margin-left:2px !important;
+  }
+  .hero > .card.todayCard .todayTempUnified{
+    gap:6px !important;
   }
   .hero > .card.todayCard .todayTempUnified span:first-of-type{
     color:#d94b4b !important;
-    font-size:26px !important;
-    font-weight:900 !important;
   }
-  .hero > .card.todayCard .todayTempUnified span:nth-of-type(2){
+  .hero > .card.todayCard .todayTempUnified span:last-of-type{
     color:#3478c9 !important;
-    font-size:24px !important;
-    font-weight:900 !important;
   }
-  .hero > .card.todayCard .todayTempUnified em{
-    color:#607890 !important;
-    font-size:7px !important;
+  .hero > .card.todayCard .todayTempUnified i{
     font-style:normal !important;
+    color:#607890 !important;
+    font-size:34px !important;
     font-weight:900 !important;
+  }
+}
+@media (max-width:700px){
+  .hero > .card.now .topTemp,
+  .hero > .card.todayCard .todayTempUnified{
+    font-family:inherit !important;
+    font-size:30px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    letter-spacing:-.045em !important;
     white-space:nowrap !important;
-  }
-
-  /* ℃が付いても横にはみ出さない */
-  .hero > .card.todayCard .todayTempUnified span{
-    letter-spacing:-.04em !important;
-  }
-
-  /* 下段4項目: ラベルと数値を一列に、絶対に途中改行させない */
-  .hero > .card.now .topMetric,
-  .hero > .card.todayCard .topMetric{
-    min-width:0 !important;
-    box-sizing:border-box !important;
-    padding:8px 8px !important;
     display:flex !important;
-    flex-direction:row !important;
     align-items:baseline !important;
-    justify-content:flex-start !important;
-    gap:4px !important;
-    overflow:hidden !important;
-    white-space:nowrap !important;
   }
-
-  .hero > .card.now .topMetric span,
-  .hero > .card.todayCard .topMetric span{
-    flex:0 0 auto !important;
-    min-width:0 !important;
-    font-size:9px !important;
-    line-height:1 !important;
-    white-space:nowrap !important;
-    word-break:keep-all !important;
+  .hero > .card.now .topTemp small{
+    font-size:12px !important;
+    margin-left:1px !important;
   }
-
-  .hero > .card.now .topMetric b,
-  .hero > .card.todayCard .topMetric b{
-    flex:0 1 auto !important;
+  .hero > .card.todayCard .todayTempUnified{
+    gap:3px !important;
+    width:max-content !important;
+    max-width:100% !important;
+  }
+  .hero > .card.todayCard .todayTempUnified span:first-of-type{
+    color:#d94b4b !important;
+    font-size:30px !important;
+  }
+  .hero > .card.todayCard .todayTempUnified span:last-of-type{
+    color:#3478c9 !important;
+    font-size:30px !important;
+  }
+  .hero > .card.todayCard .todayTempUnified i{
+    font-style:normal !important;
+    color:#607890 !important;
+    font-size:20px !important;
+    font-weight:900 !important;
+  }
+  .hero > .card.todayCard .topWeatherText{
     min-width:0 !important;
-    font-size:14px !important;
-    line-height:1 !important;
-    white-space:nowrap !important;
-    word-break:keep-all !important;
     overflow:visible !important;
-    text-align:left !important;
-    letter-spacing:-.025em !important;
-  }
-
-  /* mm / km/h の長い値を優先して収める */
-  .hero > .card.now .topMetric:last-child b,
-  .hero > .card.todayCard .topMetric:last-child b{
-    font-size:13.5px !important;
-  }
-
-  /* 7日予報の温度も℃表記 */
-  .days .day .t{
-    white-space:nowrap !important;
-    word-break:keep-all !important;
-  }
-  .days .day .t b{
-    white-space:nowrap !important;
   }
 }
 </style>
@@ -2110,7 +2094,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="topMain">
         <div class="topIcon" id="todayIcon">☀️</div>
         <div class="topWeatherText">
-          <div class="topTemp todayTempUnified"><span id="todayMax">--</span><em>最高</em><span id="todayMin">--</span><em>最低</em></div>
+          <div class="topTemp todayTempUnified"><span id="todayMax">--℃</span><i>/</i><span id="todayMin">--℃</span></div>
           <div class="topSummary" id="todaySummary">取得中…</div>
         </div>
       </div>
