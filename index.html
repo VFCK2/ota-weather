@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v1.4</title>
+<title>O-SORA v1.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2571,6 +2571,16 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<!-- O-SORA PWA -->
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="theme-color" content="#eaf5ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="O-SORA">
+<meta name="mobile-web-app-capable" content="yes">
+
 </head>
 <body>
 <div class="app">
@@ -3595,5 +3605,14 @@ $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textC
 setLocationLabels(); setupMap(); load().then(()=>loadLearningState());
 setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
 </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+
 </body>
 </html>
