@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.6</title>
+<title>OTA WEATHER | 大田区天気2.7</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2389,11 +2389,68 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   }
 }
 
+
+/* =========================================================
+   v5.0: DATA RECOVERY + TOP 3 CARD FINAL LAYOUT
+   ========================================================= */
+
+/* Desktop / mouse-pointer environments: always use the dashboard row */
+@media (pointer:fine){
+  .topGridV48{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.18fr) !important;
+    gap:16px !important;
+    width:100% !important;
+    align-items:stretch !important;
+  }
+  .topGridV48 > .now,
+  .topGridV48 > .todayForecastV45,
+  .topGridV48 > .mapCard{
+    grid-column:auto !important;
+    width:auto !important;
+    min-width:0 !important;
+    margin:0 !important;
+  }
+}
+
+/* Actual touch/mobile devices */
+@media (pointer:coarse) and (max-width:700px){
+  .topGridV48{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:10px !important;
+  }
+  .topGridV48 > .now,
+  .topGridV48 > .todayForecastV45,
+  .topGridV48 > .mapCard{
+    grid-column:auto !important;
+    width:100% !important;
+  }
+}
+
+/* If a desktop browser reports a narrow viewport, keep two columns
+   rather than collapsing the dashboard into a long vertical stack. */
+@media (pointer:fine) and (max-width:1000px){
+  .topGridV48{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  }
+  .topGridV48 > .mapCard{
+    grid-column:1 / -1 !important;
+  }
+}
+
+/* Never allow an old rule to impose a full-width card inside the new grid */
+.topGridV48 > .card{
+  max-width:none !important;
+  box-sizing:border-box !important;
+}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header"><div class="brand"><b>OTA</b> WEATHER</div><div class="updated" id="updated">更新中…</div></div>
+<div id="status" aria-hidden="true" style="display:none!important"></div>
 
   <div class="topGridV48">
     <section class="card now">
