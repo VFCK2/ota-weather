@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v9.2</title>
+<title>OTA WEATHER v10.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -990,6 +990,63 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   }
 }
 
+
+/* ===== v10.0 日本＋海外マルチモデル統合 ===== */
+.multiModelBarV10{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  margin:-7px 0 9px;
+  padding:0 4px;
+  color:#60758b;
+  font-size:10px;
+  font-weight:800;
+}
+.modelChipV10{
+  padding:4px 8px;
+  border:1px solid #dce7f1;
+  border-radius:999px;
+  background:#fff;
+  color:#526b83;
+  line-height:1;
+}
+.modelChipV10.jma{
+  border-color:#b9d9f7;
+  background:#eef7ff;
+  color:#1769aa;
+}
+.modelStateV10{
+  margin-left:auto;
+  color:#8192a4;
+  font-weight:700;
+}
+.hfSourceV10{
+  position:absolute;
+  right:7px;
+  top:3px;
+  font-size:8px;
+  color:#9aabba;
+  font-weight:800;
+}
+.hfRainV10 .probV10{
+  color:#6482a0;
+  font-size:10px;
+}
+@media screen and (max-width:700px){
+  .multiModelBarV10{
+    margin:-5px 0 7px;
+    gap:5px;
+    font-size:9px;
+  }
+  .modelChipV10{padding:4px 6px}
+  .modelStateV10{
+    width:100%;
+    margin-left:0;
+    text-align:left;
+  }
+}
+
 /* 参考画像の構成を踏襲した12時間タイムライン */
 .hourlyForecastCardV9{
   padding:10px 12px 8px !important;
@@ -1193,6 +1250,16 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   }
 }
 
+
+.dataAttributionV10{
+  text-align:center;
+  color:#8a9bad;
+  font-size:9px;
+  font-weight:700;
+  padding:2px 8px 8px;
+  line-height:1.5;
+}
+
 </style>
 
 </head>
@@ -1236,7 +1303,15 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     </section>
   </div>
 
-  <div class="sectionTitle"><h2>この先12時間</h2><span>1時間ごとの予報</span></div>
+  <div class="sectionTitle"><h2>この先12時間</h2><span>日本＋海外4モデル統合</span></div>
+  <div class="multiModelBarV10" id="multiModelBarV10">
+    <b>統合予報</b>
+    <span class="modelChipV10 jma">JMA MSM</span>
+    <span class="modelChipV10">ECMWF</span>
+    <span class="modelChipV10">ICON</span>
+    <span class="modelChipV10">GFS</span>
+    <span class="modelStateV10" id="modelStateV10">4モデルを取得中…</span>
+  </div>
   <section class="card hourlyForecastCardV9">
     <div class="hourlyScrollV9" id="hourlyScrollV9">
       <div class="hourlyForecastV9" id="hourlyForecastV9"></div>
@@ -1249,7 +1324,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
   <section class="card learningCard">
     <div class="learningRow"><div><b>🧠 予報学習</b><span id="learningText">確認中…</span></div><button id="learnUpdate">学習データ更新</button></div>
-    <div class="learningNote">過去の予報と実測を答え合わせし、1〜6時間先の降水確率を大田区向けに微調整します。今から60分は気象庁ナウキャストを優先します。</div>
+    <div class="learningNote">過去の予報と実測を答え合わせし、統合予報の降水確率を大田区向けに微調整します。今から60分は気象庁ナウキャストを優先します。</div>
   </section>
 
   <div id="status" hidden></div>
@@ -1469,78 +1544,320 @@ function renderHourlyCards(hourly){
   root.dataset.count=String(future.length);
 }
 
-async function fetchOpenMeteo12h(){
-  const url='https://api.open-meteo.com/v1/forecast'
-    +'?latitude='+LAT+'&longitude='+LON
-    +'&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'
-    +'&forecast_hours=24&timezone=Asia%2FTokyo';
-  const r=await fetch(url,{cache:'no-store'});
-  if(!r.ok) throw new Error('Open-Meteo 12時間予報 HTTP '+r.status);
+
+const MULTI_MODEL_ENDPOINTS_V10 = {
+  JMA_MSM: {
+    name:"JMA MSM",
+    url:"https://api.open-meteo.com/v1/jma",
+    weight:.40,
+    params:"models=jma_msm"
+  },
+  ECMWF: {
+    name:"ECMWF IFS HRES",
+    url:"https://api.open-meteo.com/v1/ecmwf",
+    weight:.30,
+    params:""
+  },
+  ICON: {
+    name:"DWD ICON",
+    url:"https://api.open-meteo.com/v1/dwd-icon",
+    weight:.15,
+    params:""
+  },
+  GFS: {
+    name:"NOAA GFS",
+    url:"https://api.open-meteo.com/v1/gfs",
+    weight:.15,
+    params:""
+  }
+};
+
+function modelApiUrlV10(cfg){
+  const q =
+    '?latitude='+LAT+
+    '&longitude='+LON+
+    '&hourly=precipitation_probability,precipitation,temperature_2m,wind_speed_10m,weather_code'+
+    '&forecast_hours=24&timezone=Asia%2FTokyo';
+  return cfg.url + q + (cfg.params ? '&'+cfg.params : '');
+}
+
+function normalizeModelHourlyV10(d, key){
+  if(!d?.hourly?.time || !Array.isArray(d.hourly.time)) {
+    throw new Error(key+' の時間データなし');
+  }
+  const h=d.hourly;
+  return h.time.map((time,i)=>({
+    time,
+    temperature_2m:Number(h.temperature_2m?.[i] ?? NaN),
+    precipitation:Number(h.precipitation?.[i] ?? NaN),
+    precipitation_probability:Number(h.precipitation_probability?.[i] ?? NaN),
+    wind_speed_10m:Number(h.wind_speed_10m?.[i] ?? NaN),
+    weather_code:Number(h.weather_code?.[i] ?? 0)
+  }));
+}
+
+async function fetchOneWeatherModelV10(key, cfg){
+  const r=await fetch(modelApiUrlV10(cfg),{cache:'no-store'});
+  if(!r.ok) throw new Error(cfg.name+' HTTP '+r.status);
   const d=await r.json();
-  if(!d.hourly||!Array.isArray(d.hourly.time)) throw new Error('12時間予報データなし');
-  const bias=Number(forecast?.learning_bias||0);
-  return d.hourly.time.map((time,i)=>{
-    const raw=Number(d.hourly.precipitation_probability?.[i]??0)/100;
-    const learned=Math.max(0,Math.min(1,raw-bias));
-    return {time,precipitation_probability:learned*100,precipitation:Number(d.hourly.precipitation?.[i]??0),temperature_2m:Number(d.hourly.temperature_2m?.[i]??0),relative_humidity_2m:Number(d.hourly.relative_humidity_2m?.[i]??0),wind_speed_10m:Number(d.hourly.wind_speed_10m?.[i]??0),weather_code:Number(d.hourly.weather_code?.[i]??0)};
+  return {key, name:cfg.name, weight:cfg.weight, hourly:normalizeModelHourlyV10(d,key)};
+}
+
+function modelWeightForHourV10(key, hourIndex){
+  // 初期値。大田区の実測学習が十分に貯まったら将来ここを自動化する。
+  // 短時間はJMAをやや重く、先になるほど海外モデルも均等に効かせる。
+  const base = {
+    JMA_MSM:.40,
+    ECMWF:.30,
+    ICON:.15,
+    GFS:.15
+  };
+  if(hourIndex<=2){
+    return {JMA_MSM:.50,ECMWF:.25,ICON:.15,GFS:.10}[key] ?? 0;
+  }
+  if(hourIndex<=5){
+    return {JMA_MSM:.45,ECMWF:.30,ICON:.15,GFS:.10}[key] ?? 0;
+  }
+  return base[key] ?? 0;
+}
+
+function finiteV10(v){
+  return Number.isFinite(Number(v)) ? Number(v) : null;
+}
+
+function weightedMeanV10(items, field, fallback=0){
+  let sum=0, wsum=0;
+  items.forEach(({model,item,weight})=>{
+    const v=finiteV10(item?.[field]);
+    if(v==null)return;
+    sum += v*weight;
+    wsum += weight;
   });
+  return wsum ? sum/wsum : fallback;
+}
+
+function weightedWeatherCodeV10(items){
+  const groups = new Map();
+  items.forEach(({model,item,weight})=>{
+    const code=Number(item?.weather_code);
+    if(!Number.isFinite(code))return;
+    let group="cloud";
+    if(code===0) group="clear";
+    else if(code<=3) group="cloud";
+    else if(code<=48) group="cloud";
+    else if(code<=67) group="rain";
+    else if(code<=77) group="snow";
+    else if(code<=82) group="shower";
+    else group="storm";
+    groups.set(group,(groups.get(group)||0)+weight);
+  });
+  let bestGroup="cloud", best=-1;
+  for(const [g,w] of groups){
+    if(w>best){best=w;bestGroup=g;}
+  }
+  const representative={
+    clear:0, cloud:3, rain:61, snow:71, shower:80, storm:95
+  };
+  return representative[bestGroup] ?? 3;
+}
+
+function buildBlendedHourlyV10(results){
+  const byTime=new Map();
+  results.forEach(model=>{
+    model.hourly.forEach(item=>{
+      if(!byTime.has(item.time))byTime.set(item.time,[]);
+      byTime.get(item.time).push({
+        model,
+        item,
+        weight:modelWeightForHourV10(model.key,0)
+      });
+    });
+  });
+
+  const times=[...byTime.keys()].sort();
+  return times.map((time,idx)=>{
+    const entries=byTime.get(time).map(x=>({
+      ...x,
+      weight:modelWeightForHourV10(x.model.key,idx)
+    }));
+
+    const temp=weightedMeanV10(entries,'temperature_2m',0);
+    const precip=Math.max(0,weightedMeanV10(entries,'precipitation',0));
+    let prob=weightedMeanV10(entries,'precipitation_probability',NaN);
+    if(!Number.isFinite(prob)){
+      const pEntries=entries.filter(x=>Number.isFinite(Number(x.item?.precipitation)));
+      prob=pEntries.length
+        ? pEntries.reduce((s,x)=>s+x.weight*(Number(x.item.precipitation)>=0.1?100:0),0) /
+          pEntries.reduce((s,x)=>s+x.weight,0)
+        : 0;
+    }
+
+    const bias=Number(forecast?.learning_bias||0);
+    prob=Math.max(0,Math.min(100,prob - bias*100));
+
+    return {
+      time,
+      temperature_2m:Number(temp.toFixed(1)),
+      precipitation:Number(precip.toFixed(2)),
+      precipitation_probability:Number(prob.toFixed(0)),
+      wind_speed_10m:Number(Math.max(0,weightedMeanV10(entries,'wind_speed_10m',0)).toFixed(1)),
+      weather_code:weightedWeatherCodeV10(entries),
+      model_count:entries.length
+    };
+  });
+}
+
+function renderHourlyCards(hourly){
+  const future=(hourly||[])
+    .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+    .slice(0,12);
+
+  const root=$('hourlyForecastV9');
+  if(!root)return;
+
+  if(!future.length){
+    root.innerHTML='<div class="timelineLoading">12時間予報データがありません</div>';
+    return;
+  }
+
+  const temps=future.map(x=>Number(x.temperature_2m??0));
+  const tMin=Math.floor(Math.min(...temps)-1);
+  const tMax=Math.ceil(Math.max(...temps)+1);
+  const range=Math.max(3,tMax-tMin);
+
+  const windArrow=(ms)=>{
+    const v=Number(ms??0);
+    if(v<1)return '•';
+    return '▼';
+  };
+
+  let html='<div class="hfLabelV9">時刻</div>';
+  future.forEach(x=>{
+    const dt=new Date(x.time);
+    const isNew=dt.getHours()===0;
+    html+=`<div class="hfCellV9 hfTimeV9"><span>${isNew?'<span class="hfDateV9">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span>':''}${timeHM(x.time)}</span></div>`;
+  });
+
+  html+='<div class="hfLabelV9">天気</div>';
+  future.forEach(x=>html+=`<div class="hfCellV9"><span class="hfWxV9">${wxIcon(x.weather_code)}</span></div>`);
+
+  html+='<div class="hfLabelV9">気温<br><small>℃</small></div>';
+  future.forEach(x=>html+=`<div class="hfCellV9 hfTempV9">${Math.round(Number(x.temperature_2m??0))}</div>`);
+
+  html+='<div class="hfLabelV9">降水<br><small>mm/h</small></div>';
+  future.forEach(x=>{
+    const mm=Number(x.precipitation??0);
+    const pp=Math.round(Number(x.precipitation_probability??0));
+    html+=`<div class="hfCellV9 hfRainV9"><span><b>${mm.toFixed(1)}</b><br><small class="probV10">${pp}%</small></span></div>`;
+  });
+
+  html+='<div class="hfLabelV9">風<br><small>m/s</small></div>';
+  future.forEach(x=>{
+    const ms=Number(x.wind_speed_10m??0);
+    html+=`<div class="hfCellV9 hfWindV9"><span><i class="hfWindArrowV9">${windArrow(ms)}</i>${ms.toFixed(1)}</span></div>`;
+  });
+
+  const plotLeft=0, plotTop=8, plotW=1248, plotH=34;
+  const pts=future.map((x,i)=>{
+    const px=future.length===1?0:(plotW*i/(future.length-1));
+    const py=plotTop+plotH*(1-(Number(x.temperature_2m??0)-tMin)/range);
+    return `${px.toFixed(1)},${py.toFixed(1)}`;
+  }).join(' ');
+  const circles=future.map((x,i)=>{
+    const px=future.length===1?0:(plotW*i/(future.length-1));
+    const py=plotTop+plotH*(1-(Number(x.temperature_2m??0)-tMin)/range);
+    return `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="2.2"></circle>`;
+  }).join('');
+  html+=`<svg class="hfTempPlotV9" viewBox="0 0 1248 50" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"></polyline>${circles}</svg>`;
+
+  root.innerHTML=html;
+  root.dataset.count=String(future.length);
+  root.dataset.source='multi-model-v10';
 }
 
 let hourlyForecastLoadedV92=false;
 let hourlyForecastLoadingV92=false;
 
 async function ensure12HourForecast(){
-  // 12時間予報はページ表示中に何度も取り直さない。
-  // JMAの5分更新やスマホのresize/アドレスバー変化からも独立させる。
   if(hourlyForecastLoadedV92 || hourlyForecastLoadingV92)return;
   hourlyForecastLoadingV92=true;
 
-  const h=forecast?.hourly||[];
-  const available=h
-    .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
-    .slice(0,12);
-
   const root=$('hourlyForecastV9');
-  if(root){
-    root.innerHTML='<div class="hourlyLoadingStableV91">12時間予報を取得中…</div>';
-  }
+  const state=$('modelStateV10');
+
+  if(root)root.innerHTML='<div class="hourlyLoadingStableV91">日本＋海外4モデルを取得中…</div>';
+  if(state)state.textContent='JMA / ECMWF / ICON / GFS を取得中…';
 
   try{
-    // GASから12件そろっていれば、そのデータをそのまま一度だけ表示。
-    if(available.length>=12){
-      renderHourlyCards(available);
-      hourlyForecastLoadedV92=true;
-      return;
-    }
+    const keys=Object.keys(MULTI_MODEL_ENDPOINTS_V10);
+    const settled=await Promise.allSettled(
+      keys.map(k=>fetchOneWeatherModelV10(k,MULTI_MODEL_ENDPOINTS_V10[k]))
+    );
+    const ok=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
 
-    // GASが6時間程度しか返さない場合だけ、Open-Meteoから24時間取得して12件確保。
-    const extra=await fetchOpenMeteo12h();
-    const extraFuture=extra
+    if(!ok.length)throw new Error('4モデルすべて取得失敗');
+
+    const blended=buildBlendedHourlyV10(ok)
       .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
       .slice(0,12);
 
-    if(extraFuture.length>=12){
-      renderHourlyCards(extraFuture);
-      if(root)root.dataset.source='open-meteo-direct';
-      hourlyForecastLoadedV92=true;
-      return;
-    }
+    if(blended.length<12)throw new Error('統合予報の12時間分が不足');
 
-    // 外部取得でも12件そろわなかった場合のみGASデータを表示。
-    if(available.length){
-      renderHourlyCards(available);
-      hourlyForecastLoadedV92=true;
+    renderHourlyCards(blended);
+    hourlyForecastLoadedV92=true;
+
+    const names=ok.map(x=>x.name);
+    if(state){
+      state.textContent =
+        `${ok.length}/4モデル統合 · ${names.join(' / ')} · 初期ウェイト`;
     }
   }catch(e){
-    console.warn('12時間予報取得失敗',e);
-    if(available.length){
-      renderHourlyCards(available);
-      hourlyForecastLoadedV92=true;
+    console.warn('マルチモデル予報取得失敗',e);
+
+    // 4モデル取得が一部失敗しても、取得できたモデルだけで統合する。
+    try{
+      const keys=Object.keys(MULTI_MODEL_ENDPOINTS_V10);
+      const retryResults=[];
+      for(const key of keys){
+        try{
+          retryResults.push(await fetchOneWeatherModelV10(key,MULTI_MODEL_ENDPOINTS_V10[key]));
+        }catch(err){
+          console.warn(key,err);
+        }
+      }
+
+      if(retryResults.length){
+        const blended=buildBlendedHourlyV10(retryResults)
+          .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+          .slice(0,12);
+        if(blended.length){
+          renderHourlyCards(blended);
+          hourlyForecastLoadedV92=true;
+          if(state)state.textContent=`${retryResults.length}/4モデル統合 · 一部モデル未取得`;
+          return;
+        }
+      }
+
+      // 最後の安全弁。既存GAS予報があれば表示する。
+      const available=(forecast?.hourly||[])
+        .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+        .slice(0,12);
+      if(available.length){
+        renderHourlyCards(available);
+        hourlyForecastLoadedV92=true;
+        if(state)state.textContent='統合予報を取得できず、GAS予報を表示';
+      }else{
+        if(state)state.textContent='予報データを取得できませんでした';
+      }
+    }catch(fallbackError){
+      console.error('統合予報フォールバック失敗',fallbackError);
+      if(state)state.textContent='統合予報取得失敗';
     }
   }finally{
     hourlyForecastLoadingV92=false;
   }
 }
+
 
 function renderWeek(d){
   const list=(Array.isArray(d)?d:[]).slice(1,8);
