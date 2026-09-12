@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v12.2</title>
+<title>OTA WEATHER v1.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2236,7 +2236,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
 
 <style>
-/* ===== CUTE MINIMAL WEATHER ICONS ===== */
+/* ===== CLAY STYLE WEATHER ICONS ===== */
 .wxImg{
   display:block;
   width:1em;
@@ -2244,43 +2244,39 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   object-fit:contain;
   flex:none;
 }
-.topIcon .wxImg{
+.hero .weatherIcon,
+.hero .todayIcon{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.hero .weatherIcon .wxImg,
+.hero .todayIcon .wxImg{
   width:82px;
   height:82px;
-  margin:auto;
 }
 .hfWxV9 .wxImg{
   width:34px;
   height:34px;
-  margin:auto;
 }
-.day .ico .wxImg{
-  width:50px;
-  height:50px;
-  margin:auto;
+.days .day .ico .wxImg{
+  width:52px;
+  height:52px;
 }
 @media screen and (max-width:700px){
-  .hero .topIcon .wxImg{
+  .hero .weatherIcon .wxImg,
+  .hero .todayIcon .wxImg{
     width:48px;
     height:48px;
   }
   .timeline .hfWxV9 .wxImg{
-    width:38px;
-    height:38px;
+    width:40px;
+    height:40px;
   }
   .days .day .ico .wxImg{
-    width:48px;
-    height:48px;
+    width:50px;
+    height:50px;
   }
-}
-</style>
-
-
-<style>
-.hero .topIcon{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
 }
 </style>
 
@@ -2392,8 +2388,7 @@ function wxIcon(code,isDay=1){
   const day=Number(isDay)!==0;
   let name="cloudy";
   if(code===0) name=day?"sunny":"night-clear";
-  else if(code===1) name=day?"partly-cloudy":"night-cloudy";
-  else if(code===2) name=day?"partly-cloudy":"night-cloudy";
+  else if(code===1||code===2) name=day?"partly-cloudy":"night-cloudy";
   else if(code===3) name="cloudy";
   else if(code===45||code===48) name="fog";
   else if(code>=51&&code<=57) name=day?"light-rain":"night-rain";
@@ -2416,7 +2411,8 @@ function normalizeGAS(d){
     temperature_2m:Number(x.temperature_2m ?? x.temperature_c ?? 0),
     relative_humidity_2m:Number(x.relative_humidity_2m ?? x.humidity_pct ?? 0),
     wind_speed_10m:Number(x.wind_speed_10m ?? x.wind_kmh ?? 0),
-    weather_code:Number(x.weather_code ?? 0)
+    weather_code:Number(x.weather_code ?? 0),
+    is_day:Number(x.is_day ?? 1)
   }));
   const daily=(d.daily||[]).map(x=>({
     time:x.time||x.date,
@@ -2729,7 +2725,7 @@ function renderHourlyCards(hourly){
   });
 
   html+='<div class="hfLabelV9">天気</div>';
-  future.forEach(x=>html+=`<div class="hfCellV9"><span class="hfWxV9">${wxIcon(x.weather_code)}</span></div>`);
+  future.forEach(x=>html+=`<div class="hfCellV9"><span class="hfWxV9">${wxIcon(x.weather_code,x.is_day)}</span></div>`);
 
   html+='<div class="hfLabelV9">気温<br><small>℃</small></div>';
   future.forEach(x=>html+=`<div class="hfCellV9 hfTempV9">${Math.round(Number(x.temperature_2m??0))}</div>`);
@@ -2959,7 +2955,7 @@ function renderHourlyCards(hourly){
   });
 
   html+='<div class="hfLabelV9">天気</div>';
-  future.forEach(x=>html+=`<div class="hfCellV9"><span class="hfWxV9">${wxIcon(x.weather_code)}</span></div>`);
+  future.forEach(x=>html+=`<div class="hfCellV9"><span class="hfWxV9">${wxIcon(x.weather_code,x.is_day)}</span></div>`);
 
   html+='<div class="hfLabelV9">気温<br><small>℃</small></div>';
   future.forEach(x=>html+=`<div class="hfCellV9 hfTempV9">${Math.round(Number(x.temperature_2m??0))}</div>`);
@@ -3085,7 +3081,7 @@ function renderWeek(d){
     const dt=new Date(x.time);
     const md=dt.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});
     const wd=dt.toLocaleDateString('ja-JP',{weekday:'short'});
-    return `<div class="day"><div class="d"><span>${md}</span><b>${wd}</b></div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}℃</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}℃</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`;
+    return `<div class="day"><div class="d"><span>${md}</span><b>${wd}</b></div><div class="ico">${wxIcon(x.weather_code,1)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}℃</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}℃</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`;
   }).join('');
 }
 
