@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v1.3</title>
+<title>OTA WEATHER v1.4</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2556,6 +2556,21 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 </style>
 
+
+<style>
+/* 起動直後の旧絵文字フラッシュ防止 */
+.hero .topIcon{
+  color:transparent !important;
+}
+.hero .topIcon .wxImg{
+  opacity:0;
+  transition:opacity .12s ease;
+}
+.hero .topIcon.icon-ready .wxImg{
+  opacity:1;
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -2571,7 +2586,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     <section class="card now">
       <div class="topCardHead"><div class="kicker">CURRENT WEATHER</div><div class="topCardPlace">大田区</div></div>
       <div class="topMain">
-        <div class="topIcon" id="icon">☁️</div>
+        <div class="topIcon" id="icon"></div>
         <div class="topWeatherText">
           <div class="topTemp" id="temp">--<small>℃</small></div>
           <div class="topSummary" id="summary">取得中…</div>
@@ -2592,7 +2607,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
         <div class="topCardPlace">大田区</div>
       </div>
       <div class="topMain">
-        <div class="topIcon" id="todayIcon">☀️</div>
+        <div class="topIcon" id="todayIcon"></div>
         <div class="topWeatherText">
           <div class="topTemp todayTempUnified"><span id="todayMax">--</span><small>℃</small><i>/</i><span id="todayMin">--</span><small>℃</small></div>
           <div class="topSummary" id="todaySummary">取得中…</div>
@@ -3397,7 +3412,7 @@ function render(){
   const c=forecast.current||{}, h=forecast.hourly||[], d=forecast.daily||[];
   const today=getTodayDaily(d);
   $('todayLabel').textContent=today.time?new Date(today.time).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}):'--/--';
-  $('todayIcon').innerHTML=wxIcon(today.weather_code,1);
+  $('todayIcon').innerHTML=wxIcon(today.weather_code,1);$('todayIcon').classList.add('icon-ready');
   $('todaySummary').textContent=wxText(today.weather_code);
   $('todayMax').textContent=Math.round(today.temperature_2m_max??0);
   $('todayMin').textContent=Math.round(today.temperature_2m_min??0);
@@ -3407,7 +3422,7 @@ function render(){
   $('temp').innerHTML=(c.temperature_2m??'--')+'<small>℃</small>';
   $('wind').textContent=(c.wind_speed_10m??'--')+' km/h';
   $('rainNow').textContent=(c.precipitation??0)+' mm';
-  $('icon').innerHTML=wxIcon(c.weather_code,c.is_day);
+  $('icon').innerHTML=wxIcon(c.weather_code,c.is_day);$('icon').classList.add('icon-ready');
   $('summary').textContent=wxText(c.weather_code);
 
   renderWeek(d);
