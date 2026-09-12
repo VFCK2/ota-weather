@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.0</title>
+<title>OTA WEATHER v10.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1260,6 +1260,25 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   line-height:1.5;
 }
 
+
+.modelScoreV10{
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  color:#718096;
+  font-size:10px;
+  font-weight:800;
+}
+.modelScoreV10 b{
+  color:#31506c;
+  font-size:10px;
+}
+@media screen and (max-width:700px){
+  .modelScoreV10{display:block;line-height:1.5}
+}
+
 </style>
 
 </head>
@@ -1325,6 +1344,9 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   <section class="card learningCard">
     <div class="learningRow"><div><b>🧠 予報学習</b><span id="learningText">確認中…</span></div><button id="learnUpdate">学習データ更新</button></div>
     <div class="learningNote">過去の予報と実測を答え合わせし、統合予報の降水確率を大田区向けに微調整します。今から60分は気象庁ナウキャストを優先します。</div>
+    <div class="modelScoreV10" id="modelScoreV10">
+      <span>採点状況</span><b id="modelScoreTextV10">モデル別成績を取得中…</b>
+    </div>
   </section>
 
   <div id="status" hidden></div>
@@ -1925,14 +1947,26 @@ function render(){
 
 async function loadLearningState(){
   try{
-    const d=await getGAS('learning',8000);
+    const d=await getGAS('learning_v10',8000);
     const rows=Array.isArray(d?.rows)?d.rows:[];
     learningState.samples=rows.reduce((n,r)=>n+Number(r.samples||0),0);
-    const row=rows.find(r=>String(r.engine)==='OPEN_METEO_HOURLY');
-    learningState.accuracy=row && isFinite(Number(row.rain_accuracy)) ? Number(row.rain_accuracy) : null;
-    $('learningText').textContent=`学習補正 ${Number(forecast?.learning_bias||0).toFixed(3)} / 累計 ${learningState.samples}件${learningState.accuracy!=null?' / 的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
+
+    const blend=rows.find(r=>String(r.engine)==='MULTI_MODEL_BLEND');
+    learningState.accuracy=blend && isFinite(Number(blend.rain_accuracy)) ? Number(blend.rain_accuracy) : null;
+
+    const names=['JMA_MSM','ECMWF','ICON','GFS','MULTI_MODEL_BLEND'];
+    const labels={JMA_MSM:'JMA',ECMWF:'ECMWF',ICON:'ICON',GFS:'GFS',MULTI_MODEL_BLEND:'統合'};
+    const summary=names.map(k=>{
+      const r=rows.find(x=>String(x.engine)===k);
+      if(!r || !Number(r.samples)) return labels[k]+' -';
+      return labels[k]+' '+Math.round(Number(r.rain_accuracy)*100)+'%';
+    }).join(' / ');
+
+    $('learningText').textContent=`採点 ${learningState.samples}件${learningState.accuracy!=null?' / 統合的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
+    if($('modelScoreTextV10')) $('modelScoreTextV10').textContent=summary;
   }catch(e){
-    $('learningText').textContent=`学習補正 ${Number(forecast?.learning_bias||0).toFixed(3)} / 学習データ取得待ち`;
+    $('learningText').textContent='採点データ取得待ち';
+    if($('modelScoreTextV10')) $('modelScoreTextV10').textContent='モデル別成績を取得できません';
   }
 }
 
@@ -1949,7 +1983,8 @@ $('learnUpdate').onclick=async()=>{
     await loadLearningState();
     const scored=Number(r?.score?.saved||0);
     const obs=Number(r?.score?.observations||0);
-    $('status').textContent=`● 学習更新完了 / 今回採点 ${scored}件 / 実測 ${obs}件 / JMAナウキャストはそのまま使用`;
+    const models=Number(r?.models||0);
+    $('status').textContent=`● 採点更新完了 / 今回採点 ${scored}件 / 実測 ${obs}件 / ${models}モデル保存 / JMAナウキャストはそのまま使用`;
   }catch(e){
     $('status').textContent='学習更新に失敗：'+(e.message||e);
   }
