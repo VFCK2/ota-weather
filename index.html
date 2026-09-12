@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v10.3</title>
+<title>OTA WEATHER v10.4</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -108,8 +108,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  .days .day{flex:0 0 132px;scroll-snap-align:start}
  
 .status{display:none !important}
-
-
+}
 
 /* ===== v3.8 DESKTOP UNIFIED DASHBOARD ===== */
 @media screen and (min-width:701px){
@@ -831,199 +830,221 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 .timelineLoading{padding:18px;color:#718096;font-weight:800;text-align:center;min-width:100%}
 
 
-/* ===== v4.0 FINAL DESKTOP: TODAY FORECAST redesign ===== */
+</style>
+
+<style>
+/* ===== v6.1 PC ONLY =====
+   CURRENT / TODAY の共通外観。
+   max-width:700px のスマホCSSには触れない。
+*/
 @media screen and (min-width:701px){
-  /* TODAYカードを現在カードとは明確に違う「今日の予報」カードへ */
-  .hero .todayCard{
-    position:relative;
-    overflow:hidden;
-    padding:24px 25px 22px;
-    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
-    border:1px solid #e5edf6;
-  }
-  .hero .todayCard::after{
-    content:"TODAY";
-    position:absolute;
-    right:18px;
-    top:13px;
-    font-size:44px;
-    line-height:1;
-    font-weight:1000;
-    letter-spacing:-.06em;
-    color:rgba(52,120,201,.055);
-    pointer-events:none;
-  }
-  .hero .todayHead{
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    min-height:76px;
-    margin:0;
-  }
-  .hero .todayCard .kicker{
-    font-size:12px;
-    letter-spacing:.12em;
-    color:#6b839c;
-    margin-bottom:7px;
-  }
-  .hero .todayLabel{
-    font-size:30px;
-    line-height:1.1;
-    font-weight:950;
-    letter-spacing:-.035em;
-    color:#18283a;
-    margin:0;
-  }
-  .hero .todayBadge{
-    display:block;
-    padding:7px 11px;
-    border-radius:999px;
-    background:#edf5ff;
-    color:#3478c9;
-    font-size:11px;
-    font-weight:900;
-    border:1px solid #dcecff;
-  }
-  .hero .todayMain{
-    position:relative;
-    z-index:1;
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap:22px;
-    min-height:160px;
-    margin:4px 0 17px;
-    padding:16px 17px;
-    border-radius:20px;
-    background:#f5f9fd;
-    border:1px solid #e7eff7;
-  }
-  .hero .todayIcon{
-    flex:0 0 102px;
-    width:102px;
-    font-size:88px;
-    line-height:1;
-    text-align:center;
-  }
-  .hero .todayMain > div:last-child{
-    min-width:0;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-  }
-  .hero .todaySummary{
-    font-size:21px;
-    line-height:1.25;
-    font-weight:950;
-    color:#24384d;
-    margin:0 0 9px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .hero .todayTemp{
-    display:flex;
-    align-items:baseline;
-    gap:7px;
-    white-space:nowrap;
-  }
-  .hero .todayTemp b{
-    font-size:50px !important;
-    line-height:1;
-    font-weight:950;
-    letter-spacing:-.055em;
-  }
-  .hero .todayTemp b:first-of-type{color:#d94b4b !important}
-  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
-  .hero .todayTemp span{
-    font-size:12px;
-    line-height:1;
-    font-weight:900;
-    color:#657d95;
-    margin:0 3px 0 0;
-  }
-  .hero .todayDetails{
-    position:relative;
-    z-index:1;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin:0;
-  }
-  .hero .todayDetails > div{
-    min-height:58px;
-    padding:10px 13px;
-    border-radius:14px;
-    background:#fff;
-    border:1px solid #e4edf6;
-    box-shadow:0 3px 12px rgba(35,75,115,.04);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .hero .todayDetails span{
-    font-size:12px;
-    font-weight:850;
-    color:#607890;
-  }
-  .hero .todayDetails b{
-    font-size:20px;
-    line-height:1;
-    font-weight:950;
-    color:#20374d;
+  .hero{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.28fr) !important;
+    gap:16px !important;
   }
 
-  /* PCの12時間カードも「12枚ある」ことが一目で分かる横並び */
-  .hero + .sectionTitle + .card .timeline{
-    display:flex;
-    overflow-x:auto;
+  .hero > .now,
+  .hero > .todayCard,
+  .hero > .mapCard{
+    min-width:0 !important;
+    min-height:350px !important;
   }
-  .hero + .sectionTitle + .card .timebox{
-    flex:0 0 110px;
+
+  .hero > .now,
+  .hero > .todayCard{
+    background:linear-gradient(135deg,#fff 0%,#f5fbff 100%) !important;
+    border:1px solid var(--line) !important;
+    border-radius:20px !important;
+    box-shadow:var(--shadow) !important;
+  }
+
+  /* CURRENT / TODAY の見出し */
+  .hero > .now .kicker,
+  .hero > .todayCard .kicker{
+    font-size:13px !important;
+    line-height:1.2 !important;
+    color:#4d6680 !important;
+    font-weight:900 !important;
+    letter-spacing:.08em !important;
+  }
+
+  .hero > .now .place,
+  .hero > .todayCard .todayLabel{
+    color:#172333 !important;
+    font-weight:900 !important;
+  }
+
+  /* TODAYのメインをCURRENTと同じフラットな情報構造に */
+  .hero > .todayCard .todayMain{
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+  }
+
+  .hero > .todayCard .todayIcon,
+  .hero > .now .weatherIcon{
+    font-size:76px !important;
+  }
+
+  .hero > .todayCard .todayDetails > div,
+  .hero > .now .metric{
+    background:#f5f8fc !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+
+  .hero > .todayCard .todayDetails{
+    grid-template-columns:1fr 1fr !important;
+  }
+}
+
+/* ===== v9.0 TODAY / 12H FORECAST ===== */
+@media screen and (min-width:701px){
+  .hero{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.28fr) !important;
+    gap:16px !important;
+  }
+  .hero>.now,.hero>.todayCard,.hero>.mapCard{
+    min-width:0 !important;
+    height:360px !important;
+    min-height:360px !important;
+  }
+  .hero>.todayCard{
+    display:flex !important;
+    flex-direction:column !important;
+    padding:20px !important;
+    overflow:hidden !important;
+  }
+  .hero>.todayCard .todayHead{
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
+    min-height:0 !important;
+  }
+  .hero>.todayCard .todayLabel{
+    font-size:27px !important;
+    line-height:1.15 !important;
+    margin:4px 0 0 !important;
+  }
+  .hero>.todayCard .todayMain{
+    flex:1 1 auto !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:18px !important;
+    margin:8px 0 16px !important;
+    min-height:0 !important;
+  }
+  .hero>.todayCard .todayIcon{
+    flex:0 0 82px !important;
+    width:82px !important;
+    font-size:72px !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+  .hero>.todayCard .todayMain>div:last-child{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+  }
+  .hero>.todayCard .todaySummary{
+    font-size:19px !important;
+    line-height:1.25 !important;
+    margin:0 0 7px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .hero>.todayCard .todayTemp{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:7px !important;
+    white-space:nowrap !important;
+  }
+  .hero>.todayCard .todayTemp b{
+    font-size:44px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+  }
+  .hero>.todayCard .todayTemp b:first-of-type{color:#d94b4b !important}
+  .hero>.todayCard .todayTemp b:last-of-type{color:#3478c9 !important}
+  .hero>.todayCard .todayTemp span{
+    font-size:12px !important;
+    font-weight:900 !important;
+    color:#607890 !important;
+  }
+  .hero>.todayCard .todayDetails{
+    flex:none !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    margin:0 !important;
+  }
+  .hero>.todayCard .todayDetails>div{
+    background:#f5f8fc !important;
+    border:0 !important;
+    border-radius:13px !important;
+    padding:11px 12px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
   }
 }
 
 
-
-/* ===== v4.1 FINAL: PC TODAY + TOMORROW-7DAYS ===== */
-@media screen and (min-width:701px){
-  .hero .todayCard{
-    display:flex !important;
-    flex-direction:column !important;
-    justify-content:space-between !important;
-    min-height:350px !important;
-    padding:22px !important;
-    background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%) !important;
-    overflow:hidden !important;
+/* ===== v10.0 日本＋海外マルチモデル統合 ===== */
+.multiModelBarV10{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  margin:-7px 0 9px;
+  padding:0 4px;
+  color:#60758b;
+  font-size:10px;
+  font-weight:800;
+}
+.modelChipV10{
+  padding:4px 8px;
+  border:1px solid #dce7f1;
+  border-radius:999px;
+  background:#fff;
+  color:#526b83;
+  line-height:1;
+}
+.modelChipV10.jma{
+  border-color:#b9d9f7;
+  background:#eef7ff;
+  color:#1769aa;
+}
+.modelStateV10{
+  margin-left:auto;
+  color:#8192a4;
+  font-weight:700;
+}
+.hfSourceV10{
+  position:absolute;
+  right:7px;
+  top:3px;
+  font-size:8px;
+  color:#9aabba;
+  font-weight:800;
+}
+.hfRainV10 .probV10{
+  color:#6482a0;
+  font-size:10px;
+}
+@media screen and (max-width:700px){
+  .multiModelBarV10{
+    margin:-5px 0 7px;
+    gap:5px;
+    font-size:9px;
   }
-  .hero .todayHead{min-height:0 !important;margin-bottom:8px !important}
-  .hero .todayLabel{font-size:28px !important;font-weight:950 !important;line-height:1.1 !important}
-  .hero .todayBadge{font-size:11px !important;padding:6px 10px !important}
-  .hero .todayMain{
-    flex:1 !important;
-    min-height:0 !important;
-    margin:8px 0 14px !important;
-    padding:18px !important;
-    display:flex !important;
-    align-items:center !important;
-    gap:18px !important;
-    border-radius:18px !important;
-    background:#f4f8fc !important;
+  .modelChipV10{padding:4px 6px}
+  .modelStateV10{
+    width:100%;
+    margin-left:0;
+    text-align:left;
   }
-  .hero .todayIcon{flex:0 0 92px !important;width:92px !important;font-size:78px !important}
-  .hero .todaySummary{font-size:22px !important;line-height:1.25 !important;margin-bottom:10px !important}
-  .hero .todayTemp{display:flex !important;align-items:baseline !important;gap:6px !important}
-  .hero .todayTemp b{font-size:42px !important;font-weight:950 !important}
-  .hero .todayTemp b:first-of-type{color:#d84b4b !important}
-  .hero .todayTemp b:last-of-type{color:#3478c9 !important}
-  .hero .todayTemp span{font-size:11px !important;font-weight:900 !important;color:#607890 !important}
-  .hero .todayDetails{display:grid !important;grid-template-columns:1fr 1fr !important;gap:10px !important;margin-top:0 !important}
-  .hero .todayDetails>div{background:#f1f6fb !important;border:1px solid #e1eaf3 !important;border-radius:12px !important;padding:11px 12px !important}
-  .hero .todayDetails span{font-size:12px !important;font-weight:800 !important;color:#607890 !important}
-  .hero .todayDetails b{font-size:20px !important;font-weight:950 !important}
-  .status{display:none !important}
 }
 
 /* 参考画像の構成を踏襲した12時間タイムライン */
@@ -1230,47 +1251,220 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 }
 
 
-</style>
+.dataAttributionV10{
+  text-align:center;
+  color:#8a9bad;
+  font-size:9px;
+  font-weight:700;
+  padding:2px 8px 8px;
+  line-height:1.5;
+}
 
-<style>
-/* ===== CURRENT / TODAY FINAL UNIFICATION ===== */
-.hero .now .currentRow > div:last-child,
-.hero .todayMain > div:last-child{
-  display:flex !important;
-  flex-direction:column !important;
-  justify-content:center !important;
-  min-width:0 !important;
+
+.modelScoreV10{
+  margin-top:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  color:#718096;
+  font-size:10px;
+  font-weight:800;
 }
-.hero .now .summary{
-  order:2 !important;
-  margin:5px 0 0 !important;
-}
-.hero .now .temp{order:1 !important}
-.hero .todayTemp{order:1 !important}
-.hero .todaySummary{
-  order:2 !important;
-  margin:6px 0 0 !important;
-  line-height:1.25 !important;
-  font-weight:900 !important;
+.modelScoreV10 b{
+  color:#31506c;
+  font-size:10px;
 }
 @media screen and (max-width:700px){
-  .hero .now .summary{
-    order:2 !important;
-    margin:4px 0 0 !important;
-    font-size:12px !important;
+  .modelScoreV10{display:block;line-height:1.5}
+}
+
+</style>
+
+
+<style>
+/* ===== FINAL: CURRENT / TODAY 統一 ===== */
+@media screen and (min-width:701px){
+  .hero > .now,
+  .hero > .todayCard{
+    display:flex !important;
+    flex-direction:column !important;
   }
-  .hero .now .temp{order:1 !important}
-  .hero .todayTemp{order:1 !important}
-  .hero .todaySummary{
+
+  .hero > .now .currentRow,
+  .hero > .todayCard .todayMain{
+    flex:1 1 auto !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:18px !important;
+    margin:8px 0 16px !important;
+    min-height:0 !important;
+  }
+
+  .hero > .now .weatherIcon,
+  .hero > .todayCard .todayIcon{
+    flex:0 0 82px !important;
+    width:82px !important;
+    font-size:72px !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+
+  .hero > .now .currentRow > div:last-child,
+  .hero > .todayCard .todayMain > div:last-child{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+  }
+
+  /* 気温 → 天気状況 */
+  .hero > .now .temp,
+  .hero > .todayCard .todayTemp{
+    order:1 !important;
+  }
+  .hero > .now .summary,
+  .hero > .todayCard .todaySummary{
     order:2 !important;
     margin:5px 0 0 !important;
-    font-size:12px !important;
+  }
+
+  .hero > .now .summary,
+  .hero > .todayCard .todaySummary{
+    font-size:19px !important;
+    line-height:1.25 !important;
+    font-weight:900 !important;
     white-space:nowrap !important;
     overflow:hidden !important;
     text-overflow:ellipsis !important;
   }
+
+  .hero > .now .temp{
+    font-size:62px !important;
+    line-height:1 !important;
+  }
+
+  .hero > .todayCard .todayTemp{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:7px !important;
+    white-space:nowrap !important;
+  }
+
+  .hero > .todayCard .todayTemp b{
+    font-size:44px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+  }
+
+  .hero > .todayCard .todayTemp span{
+    font-size:12px !important;
+    font-weight:900 !important;
+    color:#607890 !important;
+  }
+
+  .hero > .now .metrics,
+  .hero > .todayCard .todayDetails{
+    margin-top:auto !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+  }
+}
+
+@media screen and (max-width:700px){
+  .hero > .now .currentRow,
+  .hero > .todayCard .todayMain{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:7px !important;
+    margin:0 0 9px !important;
+    min-height:66px !important;
+    text-align:left !important;
+  }
+
+  .hero > .now .weatherIcon,
+  .hero > .todayCard .todayIcon{
+    flex:0 0 48px !important;
+    width:48px !important;
+    font-size:43px !important;
+    line-height:1 !important;
+    margin:0 !important;
+    text-align:center !important;
+  }
+
+  .hero > .now .currentRow > div:last-child,
+  .hero > .todayCard .todayMain > div:last-child{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+    width:auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    text-align:left !important;
+  }
+
+  .hero > .now .temp,
+  .hero > .todayCard .todayTemp{
+    order:1 !important;
+  }
+
+  .hero > .now .summary,
+  .hero > .todayCard .todaySummary{
+    order:2 !important;
+    margin:4px 0 0 !important;
+    width:100% !important;
+    font-size:12px !important;
+    line-height:1.2 !important;
+    font-weight:900 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .hero > .now .temp{
+    font-size:34px !important;
+    line-height:1 !important;
+    letter-spacing:-.05em !important;
+    white-space:nowrap !important;
+  }
+  .hero > .now .temp small{font-size:13px !important}
+
+  .hero > .todayCard .todayTemp{
+    display:flex !important;
+    align-items:baseline !important;
+    justify-content:flex-start !important;
+    gap:3px !important;
+    width:auto !important;
+    margin:0 !important;
+    white-space:nowrap !important;
+  }
+
+  .hero > .todayCard .todayTemp b{
+    font-size:27px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+  }
+  .hero > .todayCard .todayTemp b:last-of-type{font-size:24px !important}
+  .hero > .todayCard .todayTemp span{
+    font-size:8px !important;
+    line-height:1 !important;
+    margin:0 1px !important;
+  }
+
+  .hero > .now .metrics,
+  .hero > .todayCard .todayDetails{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:4px !important;
+    width:100% !important;
+    margin-top:4px !important;
+  }
 }
 </style>
+
 </head>
 <body>
 <div class="app">
@@ -1291,10 +1485,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="todayHead"><div><div class="kicker">TODAY FORECAST</div><div class="todayLabel" id="todayLabel">今日</div></div><div class="todayBadge">大田区</div></div>
       <div class="todayMain">
         <div class="todayIcon" id="todayIcon">☀️</div>
-        <div>
-          <div class="todayTemp"><b id="todayMax">--</b><span>最高</span><b id="todayMin">--</b><span>最低</span></div>
-          <div class="todaySummary" id="todaySummary">取得中…</div>
-        </div>
+        <div><div class="todayTemp"><b id="todayMax">--</b><span>最高</span><b id="todayMin">--</b><span>最低</span></div><div class="todaySummary" id="todaySummary">取得中…</div></div>
       </div>
       <div class="todayDetails">
         <div><span>降水確率</span><b id="todayRain">--</b></div>
@@ -1315,7 +1506,15 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     </section>
   </div>
 
-  <div class="sectionTitle"><h2>この先12時間</h2><span>1時間ごとの予報</span></div>
+  <div class="sectionTitle"><h2>この先12時間</h2><span>日本＋海外4モデル統合</span></div>
+  <div class="multiModelBarV10" id="multiModelBarV10">
+    <b>統合予報</b>
+    <span class="modelChipV10 jma">JMA MSM</span>
+    <span class="modelChipV10">ECMWF</span>
+    <span class="modelChipV10">ICON</span>
+    <span class="modelChipV10">GFS</span>
+    <span class="modelStateV10" id="modelStateV10">4モデルを取得中…</span>
+  </div>
   <section class="card hourlyForecastCardV9">
     <div class="hourlyScrollV9" id="hourlyScrollV9">
       <div class="hourlyForecastV9" id="hourlyForecastV9"></div>
@@ -1328,7 +1527,10 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
   <section class="card learningCard">
     <div class="learningRow"><div><b>🧠 予報学習</b><span id="learningText">確認中…</span></div><button id="learnUpdate">学習データ更新</button></div>
-    <div class="learningNote">過去の予報と実測を答え合わせし、1〜6時間先の降水確率を大田区向けに微調整します。今から60分は気象庁ナウキャストを優先します。</div>
+    <div class="learningNote">過去の予報と実測を答え合わせし、統合予報の降水確率を大田区向けに微調整します。今から60分は気象庁ナウキャストを優先します。</div>
+    <div class="modelScoreV10" id="modelScoreV10">
+      <span>採点状況</span><b id="modelScoreTextV10">モデル別成績を取得中…</b>
+    </div>
   </section>
 
   <div id="status" hidden></div>
@@ -1548,78 +1750,320 @@ function renderHourlyCards(hourly){
   root.dataset.count=String(future.length);
 }
 
-async function fetchOpenMeteo12h(){
-  const url='https://api.open-meteo.com/v1/forecast'
-    +'?latitude='+LAT+'&longitude='+LON
-    +'&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'
-    +'&forecast_hours=24&timezone=Asia%2FTokyo';
-  const r=await fetch(url,{cache:'no-store'});
-  if(!r.ok) throw new Error('Open-Meteo 12時間予報 HTTP '+r.status);
+
+const MULTI_MODEL_ENDPOINTS_V10 = {
+  JMA_MSM: {
+    name:"JMA MSM",
+    url:"https://api.open-meteo.com/v1/jma",
+    weight:.40,
+    params:"models=jma_msm"
+  },
+  ECMWF: {
+    name:"ECMWF IFS HRES",
+    url:"https://api.open-meteo.com/v1/ecmwf",
+    weight:.30,
+    params:""
+  },
+  ICON: {
+    name:"DWD ICON",
+    url:"https://api.open-meteo.com/v1/dwd-icon",
+    weight:.15,
+    params:""
+  },
+  GFS: {
+    name:"NOAA GFS",
+    url:"https://api.open-meteo.com/v1/gfs",
+    weight:.15,
+    params:""
+  }
+};
+
+function modelApiUrlV10(cfg){
+  const q =
+    '?latitude='+LAT+
+    '&longitude='+LON+
+    '&hourly=precipitation_probability,precipitation,temperature_2m,wind_speed_10m,weather_code'+
+    '&forecast_hours=24&timezone=Asia%2FTokyo';
+  return cfg.url + q + (cfg.params ? '&'+cfg.params : '');
+}
+
+function normalizeModelHourlyV10(d, key){
+  if(!d?.hourly?.time || !Array.isArray(d.hourly.time)) {
+    throw new Error(key+' の時間データなし');
+  }
+  const h=d.hourly;
+  return h.time.map((time,i)=>({
+    time,
+    temperature_2m:Number(h.temperature_2m?.[i] ?? NaN),
+    precipitation:Number(h.precipitation?.[i] ?? NaN),
+    precipitation_probability:Number(h.precipitation_probability?.[i] ?? NaN),
+    wind_speed_10m:Number(h.wind_speed_10m?.[i] ?? NaN),
+    weather_code:Number(h.weather_code?.[i] ?? 0)
+  }));
+}
+
+async function fetchOneWeatherModelV10(key, cfg){
+  const r=await fetch(modelApiUrlV10(cfg),{cache:'no-store'});
+  if(!r.ok) throw new Error(cfg.name+' HTTP '+r.status);
   const d=await r.json();
-  if(!d.hourly||!Array.isArray(d.hourly.time)) throw new Error('12時間予報データなし');
-  const bias=Number(forecast?.learning_bias||0);
-  return d.hourly.time.map((time,i)=>{
-    const raw=Number(d.hourly.precipitation_probability?.[i]??0)/100;
-    const learned=Math.max(0,Math.min(1,raw-bias));
-    return {time,precipitation_probability:learned*100,precipitation:Number(d.hourly.precipitation?.[i]??0),temperature_2m:Number(d.hourly.temperature_2m?.[i]??0),relative_humidity_2m:Number(d.hourly.relative_humidity_2m?.[i]??0),wind_speed_10m:Number(d.hourly.wind_speed_10m?.[i]??0),weather_code:Number(d.hourly.weather_code?.[i]??0)};
+  return {key, name:cfg.name, weight:cfg.weight, hourly:normalizeModelHourlyV10(d,key)};
+}
+
+function modelWeightForHourV10(key, hourIndex){
+  // 初期値。大田区の実測学習が十分に貯まったら将来ここを自動化する。
+  // 短時間はJMAをやや重く、先になるほど海外モデルも均等に効かせる。
+  const base = {
+    JMA_MSM:.40,
+    ECMWF:.30,
+    ICON:.15,
+    GFS:.15
+  };
+  if(hourIndex<=2){
+    return {JMA_MSM:.50,ECMWF:.25,ICON:.15,GFS:.10}[key] ?? 0;
+  }
+  if(hourIndex<=5){
+    return {JMA_MSM:.45,ECMWF:.30,ICON:.15,GFS:.10}[key] ?? 0;
+  }
+  return base[key] ?? 0;
+}
+
+function finiteV10(v){
+  return Number.isFinite(Number(v)) ? Number(v) : null;
+}
+
+function weightedMeanV10(items, field, fallback=0){
+  let sum=0, wsum=0;
+  items.forEach(({model,item,weight})=>{
+    const v=finiteV10(item?.[field]);
+    if(v==null)return;
+    sum += v*weight;
+    wsum += weight;
   });
+  return wsum ? sum/wsum : fallback;
+}
+
+function weightedWeatherCodeV10(items){
+  const groups = new Map();
+  items.forEach(({model,item,weight})=>{
+    const code=Number(item?.weather_code);
+    if(!Number.isFinite(code))return;
+    let group="cloud";
+    if(code===0) group="clear";
+    else if(code<=3) group="cloud";
+    else if(code<=48) group="cloud";
+    else if(code<=67) group="rain";
+    else if(code<=77) group="snow";
+    else if(code<=82) group="shower";
+    else group="storm";
+    groups.set(group,(groups.get(group)||0)+weight);
+  });
+  let bestGroup="cloud", best=-1;
+  for(const [g,w] of groups){
+    if(w>best){best=w;bestGroup=g;}
+  }
+  const representative={
+    clear:0, cloud:3, rain:61, snow:71, shower:80, storm:95
+  };
+  return representative[bestGroup] ?? 3;
+}
+
+function buildBlendedHourlyV10(results){
+  const byTime=new Map();
+  results.forEach(model=>{
+    model.hourly.forEach(item=>{
+      if(!byTime.has(item.time))byTime.set(item.time,[]);
+      byTime.get(item.time).push({
+        model,
+        item,
+        weight:modelWeightForHourV10(model.key,0)
+      });
+    });
+  });
+
+  const times=[...byTime.keys()].sort();
+  return times.map((time,idx)=>{
+    const entries=byTime.get(time).map(x=>({
+      ...x,
+      weight:modelWeightForHourV10(x.model.key,idx)
+    }));
+
+    const temp=weightedMeanV10(entries,'temperature_2m',0);
+    const precip=Math.max(0,weightedMeanV10(entries,'precipitation',0));
+    let prob=weightedMeanV10(entries,'precipitation_probability',NaN);
+    if(!Number.isFinite(prob)){
+      const pEntries=entries.filter(x=>Number.isFinite(Number(x.item?.precipitation)));
+      prob=pEntries.length
+        ? pEntries.reduce((s,x)=>s+x.weight*(Number(x.item.precipitation)>=0.1?100:0),0) /
+          pEntries.reduce((s,x)=>s+x.weight,0)
+        : 0;
+    }
+
+    const bias=Number(forecast?.learning_bias||0);
+    prob=Math.max(0,Math.min(100,prob - bias*100));
+
+    return {
+      time,
+      temperature_2m:Number(temp.toFixed(1)),
+      precipitation:Number(precip.toFixed(2)),
+      precipitation_probability:Number(prob.toFixed(0)),
+      wind_speed_10m:Number(Math.max(0,weightedMeanV10(entries,'wind_speed_10m',0)).toFixed(1)),
+      weather_code:weightedWeatherCodeV10(entries),
+      model_count:entries.length
+    };
+  });
+}
+
+function renderHourlyCards(hourly){
+  const future=(hourly||[])
+    .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+    .slice(0,12);
+
+  const root=$('hourlyForecastV9');
+  if(!root)return;
+
+  if(!future.length){
+    root.innerHTML='<div class="timelineLoading">12時間予報データがありません</div>';
+    return;
+  }
+
+  const temps=future.map(x=>Number(x.temperature_2m??0));
+  const tMin=Math.floor(Math.min(...temps)-1);
+  const tMax=Math.ceil(Math.max(...temps)+1);
+  const range=Math.max(3,tMax-tMin);
+
+  const windArrow=(ms)=>{
+    const v=Number(ms??0);
+    if(v<1)return '•';
+    return '▼';
+  };
+
+  let html='<div class="hfLabelV9">時刻</div>';
+  future.forEach(x=>{
+    const dt=new Date(x.time);
+    const isNew=dt.getHours()===0;
+    html+=`<div class="hfCellV9 hfTimeV9"><span>${isNew?'<span class="hfDateV9">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span>':''}${timeHM(x.time)}</span></div>`;
+  });
+
+  html+='<div class="hfLabelV9">天気</div>';
+  future.forEach(x=>html+=`<div class="hfCellV9"><span class="hfWxV9">${wxIcon(x.weather_code)}</span></div>`);
+
+  html+='<div class="hfLabelV9">気温<br><small>℃</small></div>';
+  future.forEach(x=>html+=`<div class="hfCellV9 hfTempV9">${Math.round(Number(x.temperature_2m??0))}</div>`);
+
+  html+='<div class="hfLabelV9">降水<br><small>mm/h</small></div>';
+  future.forEach(x=>{
+    const mm=Number(x.precipitation??0);
+    const pp=Math.round(Number(x.precipitation_probability??0));
+    html+=`<div class="hfCellV9 hfRainV9"><span><b>${mm.toFixed(1)}</b><br><small class="probV10">${pp}%</small></span></div>`;
+  });
+
+  html+='<div class="hfLabelV9">風<br><small>m/s</small></div>';
+  future.forEach(x=>{
+    const ms=Number(x.wind_speed_10m??0);
+    html+=`<div class="hfCellV9 hfWindV9"><span><i class="hfWindArrowV9">${windArrow(ms)}</i>${ms.toFixed(1)}</span></div>`;
+  });
+
+  const plotLeft=0, plotTop=8, plotW=1248, plotH=34;
+  const pts=future.map((x,i)=>{
+    const px=future.length===1?0:(plotW*i/(future.length-1));
+    const py=plotTop+plotH*(1-(Number(x.temperature_2m??0)-tMin)/range);
+    return `${px.toFixed(1)},${py.toFixed(1)}`;
+  }).join(' ');
+  const circles=future.map((x,i)=>{
+    const px=future.length===1?0:(plotW*i/(future.length-1));
+    const py=plotTop+plotH*(1-(Number(x.temperature_2m??0)-tMin)/range);
+    return `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="2.2"></circle>`;
+  }).join('');
+  html+=`<svg class="hfTempPlotV9" viewBox="0 0 1248 50" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"></polyline>${circles}</svg>`;
+
+  root.innerHTML=html;
+  root.dataset.count=String(future.length);
+  root.dataset.source='multi-model-v10';
 }
 
 let hourlyForecastLoadedV92=false;
 let hourlyForecastLoadingV92=false;
 
 async function ensure12HourForecast(){
-  // 12時間予報はページ表示中に何度も取り直さない。
-  // JMAの5分更新やスマホのresize/アドレスバー変化からも独立させる。
   if(hourlyForecastLoadedV92 || hourlyForecastLoadingV92)return;
   hourlyForecastLoadingV92=true;
 
-  const h=forecast?.hourly||[];
-  const available=h
-    .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
-    .slice(0,12);
-
   const root=$('hourlyForecastV9');
-  if(root){
-    root.innerHTML='<div class="hourlyLoadingStableV91">12時間予報を取得中…</div>';
-  }
+  const state=$('modelStateV10');
+
+  if(root)root.innerHTML='<div class="hourlyLoadingStableV91">日本＋海外4モデルを取得中…</div>';
+  if(state)state.textContent='JMA / ECMWF / ICON / GFS を取得中…';
 
   try{
-    // GASから12件そろっていれば、そのデータをそのまま一度だけ表示。
-    if(available.length>=12){
-      renderHourlyCards(available);
-      hourlyForecastLoadedV92=true;
-      return;
-    }
+    const keys=Object.keys(MULTI_MODEL_ENDPOINTS_V10);
+    const settled=await Promise.allSettled(
+      keys.map(k=>fetchOneWeatherModelV10(k,MULTI_MODEL_ENDPOINTS_V10[k]))
+    );
+    const ok=settled.filter(x=>x.status==='fulfilled').map(x=>x.value);
 
-    // GASが6時間程度しか返さない場合だけ、Open-Meteoから24時間取得して12件確保。
-    const extra=await fetchOpenMeteo12h();
-    const extraFuture=extra
+    if(!ok.length)throw new Error('4モデルすべて取得失敗');
+
+    const blended=buildBlendedHourlyV10(ok)
       .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
       .slice(0,12);
 
-    if(extraFuture.length>=12){
-      renderHourlyCards(extraFuture);
-      if(root)root.dataset.source='open-meteo-direct';
-      hourlyForecastLoadedV92=true;
-      return;
-    }
+    if(blended.length<12)throw new Error('統合予報の12時間分が不足');
 
-    // 外部取得でも12件そろわなかった場合のみGASデータを表示。
-    if(available.length){
-      renderHourlyCards(available);
-      hourlyForecastLoadedV92=true;
+    renderHourlyCards(blended);
+    hourlyForecastLoadedV92=true;
+
+    const names=ok.map(x=>x.name);
+    if(state){
+      state.textContent =
+        `${ok.length}/4モデル統合 · ${names.join(' / ')} · 初期ウェイト`;
     }
   }catch(e){
-    console.warn('12時間予報取得失敗',e);
-    if(available.length){
-      renderHourlyCards(available);
-      hourlyForecastLoadedV92=true;
+    console.warn('マルチモデル予報取得失敗',e);
+
+    // 4モデル取得が一部失敗しても、取得できたモデルだけで統合する。
+    try{
+      const keys=Object.keys(MULTI_MODEL_ENDPOINTS_V10);
+      const retryResults=[];
+      for(const key of keys){
+        try{
+          retryResults.push(await fetchOneWeatherModelV10(key,MULTI_MODEL_ENDPOINTS_V10[key]));
+        }catch(err){
+          console.warn(key,err);
+        }
+      }
+
+      if(retryResults.length){
+        const blended=buildBlendedHourlyV10(retryResults)
+          .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+          .slice(0,12);
+        if(blended.length){
+          renderHourlyCards(blended);
+          hourlyForecastLoadedV92=true;
+          if(state)state.textContent=`${retryResults.length}/4モデル統合 · 一部モデル未取得`;
+          return;
+        }
+      }
+
+      // 最後の安全弁。既存GAS予報があれば表示する。
+      const available=(forecast?.hourly||[])
+        .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+        .slice(0,12);
+      if(available.length){
+        renderHourlyCards(available);
+        hourlyForecastLoadedV92=true;
+        if(state)state.textContent='統合予報を取得できず、GAS予報を表示';
+      }else{
+        if(state)state.textContent='予報データを取得できませんでした';
+      }
+    }catch(fallbackError){
+      console.error('統合予報フォールバック失敗',fallbackError);
+      if(state)state.textContent='統合予報取得失敗';
     }
   }finally{
     hourlyForecastLoadingV92=false;
   }
 }
+
 
 function renderWeek(d){
   const list=(Array.isArray(d)?d:[]).slice(1,8);
@@ -1680,7 +2124,6 @@ function render(){
   $('icon').textContent=wxIcon(c.weather_code);
   $('summary').textContent=wxText(c.weather_code);
 
-  renderHourlyCards(h);
   renderWeek(d);
   $('learningText').textContent=`学習補正 ${Number(forecast.learning_bias||0).toFixed(3)} / 累計 ${learningState.samples||0}件${learningState.accuracy!=null?' / 的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
 }
@@ -1688,14 +2131,26 @@ function render(){
 
 async function loadLearningState(){
   try{
-    const d=await getGAS('learning',8000);
+    const d=await getGAS('learning_v10',8000);
     const rows=Array.isArray(d?.rows)?d.rows:[];
     learningState.samples=rows.reduce((n,r)=>n+Number(r.samples||0),0);
-    const row=rows.find(r=>String(r.engine)==='OPEN_METEO_HOURLY');
-    learningState.accuracy=row && isFinite(Number(row.rain_accuracy)) ? Number(row.rain_accuracy) : null;
-    $('learningText').textContent=`学習補正 ${Number(forecast?.learning_bias||0).toFixed(3)} / 累計 ${learningState.samples}件${learningState.accuracy!=null?' / 的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
+
+    const blend=rows.find(r=>String(r.engine)==='MULTI_MODEL_BLEND');
+    learningState.accuracy=blend && isFinite(Number(blend.rain_accuracy)) ? Number(blend.rain_accuracy) : null;
+
+    const names=['JMA_MSM','ECMWF','ICON','GFS','MULTI_MODEL_BLEND'];
+    const labels={JMA_MSM:'JMA',ECMWF:'ECMWF',ICON:'ICON',GFS:'GFS',MULTI_MODEL_BLEND:'統合'};
+    const summary=names.map(k=>{
+      const r=rows.find(x=>String(x.engine)===k);
+      if(!r || !Number(r.samples)) return labels[k]+' -';
+      return labels[k]+' '+Math.round(Number(r.rain_accuracy)*100)+'%';
+    }).join(' / ');
+
+    $('learningText').textContent=`採点 ${learningState.samples}件${learningState.accuracy!=null?' / 統合的中率 '+Math.round(learningState.accuracy*100)+'%':''}`;
+    if($('modelScoreTextV10')) $('modelScoreTextV10').textContent=summary;
   }catch(e){
-    $('learningText').textContent=`学習補正 ${Number(forecast?.learning_bias||0).toFixed(3)} / 学習データ取得待ち`;
+    $('learningText').textContent='採点データ取得待ち';
+    if($('modelScoreTextV10')) $('modelScoreTextV10').textContent='モデル別成績を取得できません';
   }
 }
 
@@ -1704,13 +2159,16 @@ $('learnUpdate').onclick=async()=>{
   $('status').textContent='学習データを更新中…';
   try{
     const r=await getGAS('collect',20000);
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
     await load();
     await ensureSevenDayForecast(forecast?.daily||[]);
     await ensure12HourForecast();
     await loadLearningState();
     const scored=Number(r?.score?.saved||0);
     const obs=Number(r?.score?.observations||0);
-    $('status').textContent=`● 学習更新完了 / 今回採点 ${scored}件 / 実測 ${obs}件 / JMAナウキャストはそのまま使用`;
+    const models=Number(r?.models||0);
+    $('status').textContent=`● 採点更新完了 / 今回採点 ${scored}件 / 実測 ${obs}件 / ${models}モデル保存 / JMAナウキャストはそのまま使用`;
   }catch(e){
     $('status').textContent='学習更新に失敗：'+(e.message||e);
   }
@@ -1832,33 +2290,6 @@ $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
 
-window.addEventListener('resize',()=>{
-  if(forecast?.hourly) renderHourlyCards(forecast.hourly);
-});
-
-(function(){
-  const canvas=$('hourlyGraph');
-  if(!canvas)return;
-  function pick(e){
-    const d=canvas._hourlyData;
-    if(!d||!d.future?.length)return;
-    const rect=canvas.getBoundingClientRect();
-    const clientX=e.touches?e.touches[0].clientX:e.clientX;
-    const x=clientX-rect.left;
-    const idx=d.n>1
-      ? Math.max(0,Math.min(d.n-1,Math.round((x-d.x0)/d.step)))
-      : 0;
-    const v=d.future[idx];
-    const rain=Number(v.precipitation||0).toFixed(1);
-    const prob=Math.round(Number(v.precipitation_probability||0));
-    const temp=Number(v.temperature_2m||0).toFixed(1);
-    const tip=`${timeHM(v.time)}　${wxText(v.weather_code)}　気温 ${temp}℃　降水確率 ${prob}%　降水量 ${rain}mm`;
-    canvas.dataset.selected=tip;
-    canvas.title=tip;
-  }
-  canvas.addEventListener('click',pick,{passive:true});
-  canvas.addEventListener('touchend',pick,{passive:true});
-})();
 
 setupMap();load().then(()=>loadLearningState());
 setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
