@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER | 大田区天気2.1</title>
+<title>OTA WEATHER | 大田区天気2.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -13,24 +13,24 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 100%);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
-.app{max-width:900px;margin:auto;padding:18px 16px 44px}
-.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.app{max-width:1480px;margin:auto;padding:24px 28px 46px}
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px}.header .brand{font-size:18px}.header .updated{font-size:13px}
 .brand{font-weight:900;letter-spacing:.08em;font-size:13px;color:#55718e}
 .brand b{color:var(--blue)}
 .updated{font-size:12px;color:#4d6680;font-weight:700}
-.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
-.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;align-items:stretch}
+.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.hero{display:grid;grid-template-columns:1fr 1fr 1.28fr;gap:16px;align-items:stretch}.hero > .card{margin-bottom:0}
 .now{background:linear-gradient(135deg,#fff 0,#f5fbff 100%)}
 .kicker{font-size:13px;color:#4d6680;font-weight:900;letter-spacing:.08em}
-.place{font-size:25px;font-weight:900;margin:3px 0 12px}
-.currentRow{display:flex;align-items:center;gap:14px}
-.weatherIcon{font-size:48px;line-height:1}
-.temp{font-size:52px;font-weight:900;letter-spacing:-.04em}
+.place{font-size:28px;font-weight:900;margin:4px 0 14px}
+.currentRow{display:flex;align-items:center;gap:18px}
+.weatherIcon{font-size:64px;line-height:1}
+.temp{font-size:62px;font-weight:900;letter-spacing:-.045em}
 .temp small{font-size:20px;letter-spacing:0}
-.summary{font-size:16px;font-weight:800;margin-top:4px}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
-.metric{background:#f5f8fc;border-radius:13px;padding:10px}
-.metric span{display:block;color:#4b6680;font-size:13px;font-weight:700}.metric b{font-size:19px}
+.summary{font-size:18px;font-weight:900;margin-top:4px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.metric{background:#f5f8fc;border-radius:13px;padding:12px 13px}
+.metric span{display:block;color:#4b6680;font-size:13px;font-weight:800}.metric b{font-size:21px}
 .verdict{background:linear-gradient(145deg,#eaf5ff,#f7fbff);border:1px solid #cfe6ff;position:relative;overflow:hidden}
 .verdict:after{content:"";position:absolute;width:160px;height:160px;border-radius:50%;right:-65px;top:-65px;background:rgba(47,128,237,.07)}
 .vhead{display:flex;justify-content:space-between;align-items:center}
@@ -47,14 +47,14 @@ body{margin:0;background:linear-gradient(180deg,#edf6ff 0,#f7fafd 280px,#f4f7fb 
 .detail span{display:block;font-size:12px;color:#4b6680;font-weight:700}.detail b{font-size:15px}
 .sectionTitle{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 10px}
 .sectionTitle h2{font-size:16px;margin:0}.sectionTitle span{font-size:12px;color:#536b84;font-weight:600}
-.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
-.timebox{border:1px solid var(--line);border-radius:13px;padding:9px 6px;text-align:center;background:#fff}
-.timebox .t{font-size:12px;color:#46627f;font-weight:700}.timebox .p{font-size:20px;font-weight:900;margin:4px 0}.timebox .r{font-size:11px;color:#46627f;font-weight:600}
-.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
-.day{border:1px solid var(--line);border-radius:13px;padding:10px 5px;text-align:center;background:#fff;min-width:0}
-.day .d{font-size:12px;font-weight:900;color:#385773}.day .ico{font-size:24px;margin:5px 0}.day .t{font-size:13px;font-weight:900}.day .rain{font-size:11px;color:#46627f;margin-top:4px;font-weight:600}
-.mapCard{padding:12px}.mapTop{display:flex;justify-content:space-between;align-items:center;padding:3px 5px 10px}.mapTop b{font-size:15px}.mapTop span{font-size:11px;color:#536b84;font-weight:600}
-#map{height:390px;border-radius:16px;overflow:hidden;background:#dfe8ef}
+.timeline{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.timebox{flex:0 0 122px;border:1px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center;background:#fff;min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.timebox .t{font-size:14px;color:#385773;font-weight:900}.timebox .p{font-size:20px;font-weight:900;margin:4px 0}.timebox .wx{font-size:42px;line-height:1;min-height:44px;display:flex;align-items:center;justify-content:center}.timebox .r{font-size:14px;color:#46627f;font-weight:900}
+.days{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 10px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.day{flex:0 0 184px;border:1px solid var(--line);border-radius:15px;padding:12px 9px;text-align:center;background:#fff;min-width:0;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.day .d{font-size:14px;font-weight:900;color:#385773}.day .ico{font-size:46px;line-height:1;margin:3px 0}.day .daySummary{font-size:15px;font-weight:900;min-height:18px}.day .t{font-size:17px;font-weight:900}.day .t b{font-size:19px}.day .rain{font-size:14px;color:#46627f;margin-top:4px;font-weight:900}
+.mapCard{padding:12px}.mapSectionTitle{display:flex;justify-content:space-between;align-items:center;padding:3px 5px 8px}.mapSectionTitle b{font-size:19px;font-weight:900}.mapSectionTitle span{font-size:13px;color:#536b84;font-weight:700}.mapTop{display:flex;justify-content:space-between;align-items:center;padding:3px 5px 10px}.mapTop b{font-size:16px}.mapTop span{font-size:11px;color:#536b84;font-weight:700}
+#map{height:286px;border-radius:16px;overflow:hidden;background:#dfe8ef}
 .mapControls{display:flex;gap:7px;align-items:center;margin-top:9px}
 .mapControls button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;font-weight:800;color:#47627c}
 .mapControls input{flex:1}
@@ -109,6 +109,29 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
  
 .status{font-size:12px}
 
+
+
+/* ===== v3.8 DESKTOP UNIFIED DASHBOARD ===== */
+@media screen and (min-width:701px){
+  .hero .now,.hero .todayCard,.hero .mapCard{height:100%;min-height:350px}
+  .hero .mapCard{grid-column:auto}
+  .todayHead{display:flex;justify-content:space-between;align-items:flex-start}
+  .todayLabel{font-size:27px;font-weight:900;line-height:1.15;margin-top:5px}
+  .todayMain{display:flex;align-items:center;gap:18px;margin:18px 0 20px}
+  .todayIcon{font-size:64px;line-height:1;flex:0 0 78px;text-align:center}
+  .todaySummary{font-size:20px;font-weight:900;margin-bottom:7px}
+  .todayTemp{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+  .todayTemp b{font-size:43px;font-weight:900;letter-spacing:-.04em}
+  .todayTemp b:first-of-type{color:#d94b4b}
+  .todayTemp b:last-of-type{color:#3478c9}
+  .todayTemp span{font-size:12px;font-weight:900;color:#607890}
+  .todayDetails{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}
+  .todayDetails>div{background:#f5f8fc;border-radius:13px;padding:12px 13px;display:flex;align-items:center;justify-content:space-between}
+  .todayDetails span{font-size:13px;color:#4b6680;font-weight:800}.todayDetails b{font-size:20px}
+  .mapCard .mapControls{margin-top:8px}
+  .sectionTitle{margin:20px 2px 10px}.sectionTitle h2{font-size:19px;font-weight:900}.sectionTitle span{font-size:13px}
+  .learningCard{display:flex;align-items:center;gap:22px}.learningCard .learningRow{flex:0 0 390px}.learningCard .learningNote{margin:0;flex:1}
+}
 
 /* ===== v1.6 FINAL MOBILE OVERRIDE ===== */
 @media screen and (max-width:700px){
@@ -766,6 +789,13 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .hero .metric b{font-size:14px !important;line-height:1 !important}
 }
 
+
+@media screen and (max-width:700px){
+  .hero .mapCard{grid-column:1 / -1;height:auto;min-height:0;margin-top:8px}
+  .mapSectionTitle b{font-size:18px !important}.mapSectionTitle span{font-size:11px !important}
+  #map{height:390px !important}
+}
+
 </style>
 </head>
 <body>
@@ -794,10 +824,8 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
         <div><span>降水量</span><b id="todayPrecip">--</b></div>
       </div>
     </section>
-  </div>
-
-  <div class="sectionTitle"><h2>今から60分</h2><span>気象庁・高解像度降水ナウキャスト</span></div>
-  <section class="card mapCard">
+    <section class="card mapCard">
+    <div class="mapSectionTitle"><b>今から60分</b><span>気象庁・高解像度降水ナウキャスト</span></div>
     <div class="mapTop"><b>大田区周辺の雨雲</b><span>5分ごと更新 / 30分先まで250m・35〜60分先1km</span></div>
     <div id="map"></div>
     <div class="mapControls">
@@ -807,7 +835,8 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
       <div class="mapTime" id="mapTime">--:--</div>
     </div>
     <div class="note">現在の雨雲と、これから60分の動きを気象庁ナウキャストで確認します。</div>
-  </section>
+    </section>
+  </div>
 
   <div class="sectionTitle"><h2>この先12時間</h2><span>時間ごとの見通し</span></div>
   <section class="card"><div class="timeline" id="timeline"></div></section>
@@ -981,6 +1010,7 @@ function render(){
   $('summary').textContent=wxText(c.weather_code);
 
   const future=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000).slice(0,12);
+  console.log('OTA WEATHER 12h items:', future.length);
   // 時間予報では降水確率を表示せず、天気・降水量を優先します。
   $('timeline').innerHTML=future.map(x=>`<div class="timebox"><div class="t">${timeHM(x.time)}</div><div class="wx">${wxIcon(x.weather_code)}</div><div class="r">${Number(x.precipitation??0).toFixed(1)} mm</div></div>`).join('');
   $('days').innerHTML=d.slice(0,7).map(x=>{const dt=new Date(x.time);const md=dt.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});const wd=dt.toLocaleDateString('ja-JP',{weekday:'short'});return `<div class="day"><div class="d"><span>${md}</span><b>${wd}</b></div><div class="ico">${wxIcon(x.weather_code)}</div><div class="daySummary">${wxText(x.weather_code)}</div><div class="t"><b>${Math.round(x.temperature_2m_max??0)}°</b><span> / </span><b>${Math.round(x.temperature_2m_min??0)}°</b></div><div class="rain">☔ ${Math.round(x.precipitation_probability_max??0)}%</div></div>`;}).join('');
