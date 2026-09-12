@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER 大田区天気v9.1</title>
+<title>OTA WEATHER v9.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1486,25 +1486,34 @@ async function fetchOpenMeteo12h(){
   });
 }
 
-async function ensure12HourForecast(){
-  const h=forecast?.hourly||[];
-  const available=h.filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000);
+let hourlyForecastLoadedV92=false;
+let hourlyForecastLoadingV92=false;
 
-  // 12件そろっている場合だけ、そのまま表示。
-  // 6件程度しかないGASデータを一度表示してから12件に差し替えると、
-  // スマホでカード幅が一瞬変わって「崩れた」ように見えるため、部分表示はしない。
-  if(available.length>=12){
-    renderHourlyCards(available.slice(0,12));
-    return;
-  }
+async function ensure12HourForecast(){
+  // 12時間予報はページ表示中に何度も取り直さない。
+  // JMAの5分更新やスマホのresize/アドレスバー変化からも独立させる。
+  if(hourlyForecastLoadedV92 || hourlyForecastLoadingV92)return;
+  hourlyForecastLoadingV92=true;
+
+  const h=forecast?.hourly||[];
+  const available=h
+    .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
+    .slice(0,12);
 
   const root=$('hourlyForecastV9');
-  if(root && !root.dataset.loadingStarted){
-    root.dataset.loadingStarted='1';
+  if(root){
     root.innerHTML='<div class="hourlyLoadingStableV91">12時間予報を取得中…</div>';
   }
 
   try{
+    // GASから12件そろっていれば、そのデータをそのまま一度だけ表示。
+    if(available.length>=12){
+      renderHourlyCards(available);
+      hourlyForecastLoadedV92=true;
+      return;
+    }
+
+    // GASが6時間程度しか返さない場合だけ、Open-Meteoから24時間取得して12件確保。
     const extra=await fetchOpenMeteo12h();
     const extraFuture=extra
       .filter(x=>new Date(x.time).getTime()>=Date.now()-30*60*1000)
@@ -1512,20 +1521,24 @@ async function ensure12HourForecast(){
 
     if(extraFuture.length>=12){
       renderHourlyCards(extraFuture);
-      if(root) root.dataset.source='open-meteo-direct';
+      if(root)root.dataset.source='open-meteo-direct';
+      hourlyForecastLoadedV92=true;
       return;
     }
 
-    // 万一12件取れない場合は、取れたデータだけを無理に表示せず
-    // 既存の6時間程度のデータを最後のフォールバックとして表示。
+    // 外部取得でも12件そろわなかった場合のみGASデータを表示。
     if(available.length){
-      renderHourlyCards(available.slice(0,12));
+      renderHourlyCards(available);
+      hourlyForecastLoadedV92=true;
     }
   }catch(e){
-    console.warn('12時間予報 fallback failed',e);
+    console.warn('12時間予報取得失敗',e);
     if(available.length){
-      renderHourlyCards(available.slice(0,12));
+      renderHourlyCards(available);
+      hourlyForecastLoadedV92=true;
     }
+  }finally{
+    hourlyForecastLoadingV92=false;
   }
 }
 
@@ -1611,6 +1624,8 @@ $('learnUpdate').onclick=async()=>{
   $('status').textContent='学習データを更新中…';
   try{
     const r=await getGAS('collect',20000);
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
     await load();
     await ensureSevenDayForecast(forecast?.daily||[]);
     await ensure12HourForecast();
@@ -1738,17 +1753,7 @@ function findLatestFrameIndex(){
 $('slider').addEventListener('input',e=>showFrame(Number(e.target.value)));
 $('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;showFrame(i)};
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
-let hourlyResizeTimer=null;
-window.addEventListener('resize',()=>{
-  clearTimeout(hourlyResizeTimer);
-  hourlyResizeTimer=setTimeout(()=>{
-    if(forecast?.hourly?.length){
-      const root=$('hourlyForecastV9');
-      if(root) delete root.dataset.loadingStarted;
-      ensure12HourForecast();
-    }
-  },180);
-});
+
 
 setupMap();load().then(()=>loadLearningState());
 setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
