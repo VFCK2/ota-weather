@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>OTA WEATHER v1.1</title>
+<title>OTA WEATHER v1.2</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2291,6 +2291,76 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   .hero .now .weatherIcon,
   .hero .todayIcon{
     min-height:62px !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== CLAY ICON SIZE v2 : 全体1.5倍 / CURRENT・TODAYを特大化 ===== */
+
+/* PC */
+@media screen and (min-width:701px){
+  /* CURRENT / TODAY */
+  .hero > .card.now .topIcon,
+  .hero > .card.todayCard .topIcon{
+    flex:0 0 120px !important;
+    width:120px !important;
+    min-width:120px !important;
+  }
+  .hero > .card.now .topIcon .wxImg,
+  .hero > .card.todayCard .topIcon .wxImg{
+    width:156px !important;
+    height:156px !important;
+    max-width:none !important;
+  }
+
+  /* 12時間予報 */
+  .hfWxV9 .wxImg{
+    width:69px !important;
+    height:69px !important;
+  }
+
+  /* 7日間予報 */
+  .days .day .ico .wxImg{
+    width:96px !important;
+    height:96px !important;
+  }
+}
+
+/* スマホ */
+@media screen and (max-width:700px){
+  /* CURRENT / TODAY */
+  .hero > .card.now .topIcon,
+  .hero > .card.todayCard .topIcon{
+    flex:0 0 82px !important;
+    width:82px !important;
+    min-width:82px !important;
+    min-height:82px !important;
+  }
+  .hero > .card.now .topIcon .wxImg,
+  .hero > .card.todayCard .topIcon .wxImg{
+    width:93px !important;
+    height:93px !important;
+    max-width:none !important;
+  }
+
+  /* 12時間予報 */
+  .timeline .hfWxV9 .wxImg{
+    width:72px !important;
+    height:72px !important;
+  }
+
+  /* 7日間予報 */
+  .days .day .ico .wxImg{
+    width:90px !important;
+    height:90px !important;
+  }
+
+  /* 大きくしたアイコンに合わせてメイン部分にも高さを確保 */
+  .hero > .card.now .topMain,
+  .hero > .card.todayCard .topMain{
+    min-height:108px !important;
   }
 }
 </style>
