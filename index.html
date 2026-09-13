@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA v1.9</title>
+<title>O-SORA v2.0</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2586,86 +2586,65 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
 </head>
 <body>
+<style id="osora-gps-diagnostic-style">
+#osoraGpsDiag{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 10px);z-index:99999;background:rgba(20,35,50,.96);color:#fff;padding:12px 14px;border-radius:12px;font:700 13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.22);display:none;pointer-events:none}
+</style>
 <script>
-/* O-SORA iPhone/PWA: keep the location request directly inside the user tap handler. */
+window.osoraGpsDiag=function(msg){
+  var el=document.getElementById('osoraGpsDiag');
+  if(!el){el=document.createElement('div');el.id='osoraGpsDiag';document.body.appendChild(el);}
+  el.textContent=msg; el.style.display='block';
+};
 window.osoraLocationTap=function(btn){
+  if(window.__OSORA_LOCATION_BUSY__) return false;
+  window.__OSORA_LOCATION_BUSY__=true;
   try{
-    if(window.__OSORA_LOCATION_BUSY__) return false;
-    window.__OSORA_LOCATION_BUSY__=true;
-    window.__OSORA_GPS_PENDING__=true;
     if(btn && btn.dataset.mode==='gps'){
-      window.__OSORA_GPS_PENDING__=false;
+      window.osoraGpsDiag('大田区へ戻しています…');
       if(typeof window.osoraRestoreOta==='function') window.osoraRestoreOta();
-      else window.__OSORA_LOCATION_BUSY__=false;
+      else { window.__OSORA_LOCATION_BUSY__=false; window.osoraGpsDiag('大田区復帰処理が見つかりません'); }
       return false;
     }
-    if(btn){btn.disabled=false;btn.textContent='📍取得中…';btn.dataset.mode='gps-pending';}
-    var status=document.getElementById('status');
-    if(status) status.textContent='現在地を取得中…';
-    if(!window.isSecureContext){
-      if(status)status.textContent='位置情報にはHTTPS接続が必要です';
-      window.__OSORA_GPS_PENDING__=false;
-      if(btn){btn.textContent='📍現在地';btn.dataset.mode='ota';}
-      window.__OSORA_LOCATION_BUSY__=false;
-      return false;
-    }
-    if(!navigator.geolocation){
-      if(status)status.textContent='この端末では位置情報を利用できません';
-      window.__OSORA_GPS_PENDING__=false;
-      if(btn){btn.textContent='📍現在地';btn.dataset.mode='ota';}
-      window.__OSORA_LOCATION_BUSY__=false;
-      return false;
-    }
-    var done=false, watchId=null, fallbackStarted=false;
-    var finish=function(){ if(watchId!==null){try{navigator.geolocation.clearWatch(watchId);}catch(e){}} watchId=null; };
-    var fail=function(msg,code){
-      if(done)return; done=true; finish(); window.__OSORA_GPS_PENDING__=false;
-      if(status)status.textContent=msg+(code?' ['+code+']':'');
+    if(btn){btn.disabled=true;btn.textContent='📍取得中…';btn.dataset.mode='gps-pending';}
+    window.osoraGpsDiag('GPS開始 / secure='+window.isSecureContext+' / geo='+(!!navigator.geolocation)+' / standalone='+((window.navigator.standalone===true)||matchMedia('(display-mode: standalone)').matches));
+    var status=document.getElementById('status'); if(status) status.textContent='現在地を取得中…';
+    if(!window.isSecureContext){throw new Error('HTTPSではありません');}
+    if(!navigator.geolocation){throw new Error('Geolocation APIがありません');}
+    var finished=false;
+    var timer=setTimeout(function(){
+      if(finished)return; finished=true;
+      window.osoraGpsDiag('GPSタイムアウト（20秒）');
+      if(status)status.textContent='GPSタイムアウト';
       if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';}
       window.__OSORA_LOCATION_BUSY__=false;
-    };
-    var success=function(pos){
-      if(done)return; done=true; finish(); window.__OSORA_GPS_PENDING__=false;
-      var lat=Number(pos.coords.latitude), lon=Number(pos.coords.longitude);
-      if(!Number.isFinite(lat)||!Number.isFinite(lon)){fail('現在地を取得できませんでした');return;}
-      if(status)status.textContent='現在地を取得しました。天気を更新中…';
-      if(typeof window.osoraApplyGpsFix==='function') window.osoraApplyGpsFix(lat,lon,Number(pos.coords.accuracy||0));
-      else if(typeof window.applyOsoraGpsFix==='function') window.applyOsoraGpsFix({lat:lat,lon:lon,accuracy:Number(pos.coords.accuracy||0),at:Date.now()});
-      else fail('GPS処理を初期化できませんでした');
-    };
-    var error=function(err){
-      var code=err&&err.code;
-      if(code===1) fail('位置情報が許可されていません。ホーム画面のO-SORA側の位置情報設定を確認してください','1');
-      else if(code===2 && !fallbackStarted){
-        fallbackStarted=true;
-        if(status)status.textContent='現在地を再取得しています…';
-        try{navigator.geolocation.getCurrentPosition(success,error,{enableHighAccuracy:false,timeout:12000,maximumAge:60000});}
-        catch(e){fail('現在地を取得できませんでした','2');}
-      }else if(code===3 && !fallbackStarted){
-        fallbackStarted=true;
-        if(status)status.textContent='現在地を再取得しています…';
-        try{navigator.geolocation.getCurrentPosition(success,error,{enableHighAccuracy:false,timeout:12000,maximumAge:60000});}
-        catch(e){fail('現在地を取得できませんでした','3');}
-      }else fail('現在地を取得できませんでした。位置情報サービスを確認してください',String(code||'unknown'));
-    };
-    // First try getCurrentPosition in both Safari and Home Screen Web App.
-    // If the standalone app does not return a fix, fall back to watchPosition.
-    try{
-      navigator.geolocation.getCurrentPosition(success,function(err){
-        if(err&&err.code===1){ error(err); return; }
-        if(status)status.textContent='位置情報を再取得しています…';
-        try{
-          watchId=navigator.geolocation.watchPosition(success,error,{enableHighAccuracy:false,timeout:15000,maximumAge:30000});
-        }catch(e){ error(err); }
-      },{enableHighAccuracy:false,timeout:10000,maximumAge:30000});
-    }catch(e){ fail('位置情報APIの開始に失敗しました'); }
-    setTimeout(function(){ if(!done) fail('現在地の取得がタイムアウトしました。iPhoneの位置情報設定を確認してください'); },22000);
+    },20000);
+    navigator.geolocation.getCurrentPosition(function(pos){
+      if(finished)return; finished=true; clearTimeout(timer);
+      var lat=Number(pos.coords.latitude), lon=Number(pos.coords.longitude), acc=Number(pos.coords.accuracy||0);
+      window.osoraGpsDiag('GPS取得成功 / 緯度 '+lat.toFixed(5)+' / 経度 '+lon.toFixed(5)+' / 精度 '+Math.round(acc)+'m');
+      if(status) status.textContent='現在地を取得しました。天気を更新中…';
+      if(typeof window.osoraApplyGpsFix==='function'){
+        Promise.resolve(window.osoraApplyGpsFix(lat,lon,acc)).catch(function(e){
+          console.error(e); window.osoraGpsDiag('GPS後処理エラー: '+(e&&e.message?e.message:e));
+          if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';}
+          window.__OSORA_LOCATION_BUSY__=false;
+        });
+      }else{
+        window.osoraGpsDiag('GPSは取れましたが、天気更新処理が見つかりません');
+        if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';}
+        window.__OSORA_LOCATION_BUSY__=false;
+      }
+    },function(err){
+      if(finished)return; finished=true; clearTimeout(timer);
+      var code=err&&err.code; var msg=code===1?'位置情報の許可がありません（エラー1）':code===2?'位置情報を取得できません（エラー2）':code===3?'GPSタイムアウト（エラー3）':'GPSエラー';
+      window.osoraGpsDiag(msg); if(status)status.textContent=msg;
+      if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';}
+      window.__OSORA_LOCATION_BUSY__=false;
+    },{enableHighAccuracy:false,timeout:18000,maximumAge:0});
   }catch(e){
-    console.error('O-SORA location tap error',e);
-    window.__OSORA_GPS_PENDING__=false;
-    var b=document.getElementById('locationBtn'), st=document.getElementById('status');
-    if(st)st.textContent='現在地ボタンでエラーが発生しました';
-    if(b){b.disabled=false;b.textContent='📍現在地';b.dataset.mode='ota';}
+    console.error(e); window.osoraGpsDiag('GPS開始エラー: '+(e&&e.message?e.message:e));
+    var st=document.getElementById('status');if(st)st.textContent='GPS開始エラー';
+    if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';}
     window.__OSORA_LOCATION_BUSY__=false;
   }
   return false;
@@ -2757,7 +2736,7 @@ window.osoraLocationTap=function(btn){
     </div>
   </section>
 
-  <div id="status" hidden></div>
+  <div id="status" style="position:fixed;left:12px;right:12px;bottom:12px;z-index:99998;background:rgba(20,35,50,.92);color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;display:none"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3079,35 +3058,7 @@ async function useOtaLocation(){
 }
 
 // 現在地ボタンはbody直下のinline handlerから開始する。
-window.osoraApplyGpsFix=async function(lat,lon,accuracy){
-  try{
-    ACTIVE_LAT=Number(lat); ACTIVE_LON=Number(lon);
-    if(!Number.isFinite(ACTIVE_LAT)||!Number.isFinite(ACTIVE_LON)) throw new Error('位置情報が不正です');
-    locationMode='gps'; locationLabel='現在地';
-    setLocationLabels();
-    if(typeof $('status')!=='undefined' && $('status')) $('status').textContent='現在地の天気を取得中…';
-    forecast=normalizeLocationForecast(await fetchLocationForecast());
-    hourlyForecastLoadedV92=false; hourlyForecastLoadingV92=false;
-    render();
-    ensureSevenDayForecast(forecast?.daily||[]).catch(e=>console.warn('7日予報更新:',e));
-    ensure12HourForecast().catch(e=>console.warn('12時間予報更新:',e));
-    refreshMapLocation().catch(e=>console.warn('地図更新:',e));
-    var up=document.getElementById('updated');
-    if(up) up.textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-    var st=document.getElementById('status');
-    if(st) st.textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
-    window.__OSORA_LOCATION_BUSY__=false;
-    var b=document.getElementById('locationBtn');
-    if(b){b.disabled=false;b.dataset.mode='gps';b.textContent='📍現在地中';}
-  }catch(e){
-    console.error('GPS weather error',e);
-    var st=document.getElementById('status');
-    if(st) st.textContent='現在地は取得できましたが、天気の取得に失敗しました';
-    var b=document.getElementById('locationBtn');
-    if(b){b.disabled=false;b.dataset.mode='ota';b.textContent='📍現在地';}
-    window.__OSORA_LOCATION_BUSY__=false;
-  }
-};
+
 
 window.osoraRestoreOta=async function(){
   try{
@@ -3849,32 +3800,35 @@ if ('serviceWorker' in navigator) {
 
 
 <script>
+
+</script>
+
+<script>
+/* O-SORA v10: single GPS apply function */
 window.osoraApplyGpsFix=async function(lat,lon,accuracy){
   try{
     ACTIVE_LAT=Number(lat); ACTIVE_LON=Number(lon);
     if(!Number.isFinite(ACTIVE_LAT)||!Number.isFinite(ACTIVE_LON)) throw new Error('GPS座標不正');
     locationMode='gps'; locationLabel='現在地';
     if(typeof setLocationLabels==='function') setLocationLabels();
-    var st=document.getElementById('status');
-    if(st)st.textContent='現在地の天気を取得中…';
+    if(typeof window.osoraGpsDiag==='function') window.osoraGpsDiag('GPS成功。現在地の天気を取得中…');
+    var st=document.getElementById('status'); if(st) st.textContent='現在地の天気を取得中…';
     forecast=normalizeLocationForecast(await fetchLocationForecast());
     hourlyForecastLoadedV92=false; hourlyForecastLoadingV92=false;
     render();
     ensureSevenDayForecast(forecast?.daily||[]).catch(e=>console.warn('7日予報更新:',e));
     ensure12HourForecast().catch(e=>console.warn('12時間予報更新:',e));
     refreshMapLocation().catch(e=>console.warn('地図更新:',e));
-    var up=document.getElementById('updated');
-    if(up)up.textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-    if(st)st.textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
+    var up=document.getElementById('updated'); if(up) up.textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+    if(st) st.textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
+    if(typeof window.osoraGpsDiag==='function') window.osoraGpsDiag('現在地の天気を表示中');
+    var btn=document.getElementById('locationBtn'); if(btn){btn.disabled=false;btn.textContent='📍現在地中';btn.dataset.mode='gps';btn.classList.add('gpsActive');}
   }catch(e){
-    console.error('GPS weather error',e);
-    var st=document.getElementById('status');
-    if(st)st.textContent='現在地は取得できましたが、天気の取得に失敗しました';
-  }finally{
-    window.__OSORA_LOCATION_BUSY__=false;
-    var b=document.getElementById('locationBtn');
-    if(b){b.disabled=false;b.dataset.mode='gps';b.textContent='📍現在地中';}
-  }
+    console.error('GPS apply error',e);
+    if(typeof window.osoraGpsDiag==='function') window.osoraGpsDiag('GPS後処理エラー: '+(e&&e.message?e.message:e));
+    var st=document.getElementById('status'); if(st) st.textContent='現在地の天気取得に失敗しました';
+    var btn=document.getElementById('locationBtn'); if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';btn.classList.remove('gpsActive');}
+  }finally{ window.__OSORA_LOCATION_BUSY__=false; }
 };
 </script>
 </body>
