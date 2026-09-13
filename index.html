@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA v12.1</title>
+<title>O-SORA v1.4</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2583,11 +2583,58 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
 </head>
 <body>
+<script>
+/* O-SORA iPhone PWA GPS bridge: inline handler is intentionally outside the main app script. */
+window.__OSORA_GPS_FIX__ = null;
+window.osoraGpsButton = function(ev){
+  if(ev && ev.preventDefault) ev.preventDefault();
+  var btn=document.getElementById('locationBtn');
+  var status=document.getElementById('status');
+  if(btn){ btn.disabled=true; btn.textContent='📍取得中…'; }
+  if(status) status.textContent='現在地を取得中…';
+  if(!window.isSecureContext && location.protocol!=='https:'){
+    if(status) status.textContent='現在地機能はHTTPS接続で利用できます';
+    if(btn){btn.disabled=false;btn.textContent='📍現在地';}
+    return false;
+  }
+  if(!navigator.geolocation){
+    if(status) status.textContent='この端末では位置情報を利用できません';
+    if(btn){btn.disabled=false;btn.textContent='📍現在地';}
+    return false;
+  }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=Number(pos.coords.latitude), lon=Number(pos.coords.longitude);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)){
+      if(status) status.textContent='現在地を取得できませんでした';
+      if(btn){btn.disabled=false;btn.textContent='📍現在地';}
+      return;
+    }
+    window.__OSORA_GPS_FIX__={lat:lat,lon:lon,accuracy:Number(pos.coords.accuracy||0),at:Date.now()};
+    if(status) status.textContent='現在地を取得しました。天気を更新中…';
+    if(typeof window.applyOsoraGpsFix==='function'){
+      window.applyOsoraGpsFix(window.__OSORA_GPS_FIX__);
+    } else {
+      /* Main app script will consume this saved fix when it finishes loading. */
+      setTimeout(function(){
+        if(typeof window.applyOsoraGpsFix==='function') window.applyOsoraGpsFix(window.__OSORA_GPS_FIX__);
+      },50);
+    }
+  },function(err){
+    var msg='現在地を取得できませんでした';
+    if(err && err.code===1) msg='位置情報が許可されていません。iPhoneの設定でO-SORAの位置情報を確認してください';
+    else if(err && err.code===2) msg='現在地を取得できませんでした。位置情報サービスを確認してください';
+    else if(err && err.code===3) msg='現在地の取得がタイムアウトしました。もう一度押してください';
+    if(status) status.textContent=msg;
+    if(btn){btn.disabled=false;btn.textContent='📍現在地';}
+  },{enableHighAccuracy:false,timeout:15000,maximumAge:0});
+  return false;
+};
+</script>
 <div class="app">
   <div class="header">
   <div class="brand"><b>OTA</b> WEATHER</div>
   <div class="headerRight">
-    <button class="locationBtn" id="locationBtn" type="button">📍現在地</button>
+    <button class="locationBtn" id="locationBtn" type="button" onclick="window.osoraGpsButton(event)">📍現在地</button>
     <div class="updated" id="updated">GAS接続中…</div>
   </div>
 </div>
@@ -2980,30 +3027,73 @@ async function useOtaLocation(){
   }
 }
 
-// 現在地ボタン。PWA/iPhoneでは直接ユーザー操作からGeolocationを呼び出す。
+// 現在地ボタンはbody直下のiPhone/PWA用GPSブリッジから開始する。
+// ここでは取得済み座標をアプリへ渡すだけにして、ユーザー操作とGeolocationの紐付きを切らさない。
+window.applyOsoraGpsFix=async function(fix){
+  if(!fix || !Number.isFinite(Number(fix.lat)) || !Number.isFinite(Number(fix.lon))) return false;
+  const btn=$('locationBtn');
+  try{
+    ACTIVE_LAT=Number(fix.lat);
+    ACTIVE_LON=Number(fix.lon);
+    locationMode='gps';
+    locationLabel='現在地';
+    setLocationLabels();
+    if(btn){btn.disabled=true;btn.textContent='📍取得中…';}
+    $('status').textContent='現在地の天気を取得中…';
+    forecast=normalizeLocationForecast(await fetchLocationForecast());
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
+    render();
+    $('status').textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
+    $('updated').textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+    ensureSevenDayForecast(forecast.daily||[]).catch(e=>console.warn('7日予報更新:',e));
+    ensure12HourForecast().catch(e=>console.warn('12時間予報更新:',e));
+    refreshMapLocation().catch(e=>console.warn('地図更新:',e));
+    if(btn){btn.disabled=false;btn.textContent='📍現在地中';}
+    return true;
+  }catch(e){
+    console.error('GPS weather error',e);
+    $('status').textContent='現在地の天気取得失敗：'+(e.message||e);
+    if(btn){btn.disabled=false;btn.textContent='📍現在地';}
+    return false;
+  }
+};
+
+// main scriptより先にGPSが取れた場合にも確実に引き継ぐ。
+if(window.__OSORA_GPS_FIX__) window.applyOsoraGpsFix(window.__OSORA_GPS_FIX__);
+
+async function useGpsLocation(){
+  // 互換用。現在地ボタンはosoraGpsButton()を使用。
+  return window.osoraGpsButton();
+}
+
+async function useOtaLocation(){
+  ACTIVE_LAT=BASE_LAT;
+  ACTIVE_LON=BASE_LON;
+  locationMode='ota';
+  locationLabel='大田区';
+  setLocationLabels();
+  try{
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
+    await load();
+    ensureSevenDayForecast(forecast?.daily||[]).catch(e=>console.warn('7日予報更新:',e));
+    ensure12HourForecast().catch(e=>console.warn('12時間予報更新:',e));
+    refreshMapLocation().catch(e=>console.warn('地図更新:',e));
+  }catch(e){
+    console.error('Ota location restore error',e);
+  }
+}
+
+// 2回目以降はボタンを大田区へ戻す動作にする。初回GPS取得はinline handler。
 const locationButton=$('locationBtn');
 if(locationButton){
-  locationButton.onclick=async function(){
-    if(this.dataset.busy==='1') return;
-    if(locationMode==='gps'){
-      this.dataset.busy='1';
-      try{ await useOtaLocation(); }
-      finally{ this.dataset.busy='0'; }
-      return;
+  locationButton.addEventListener('click',async function(){
+    if(locationMode==='gps' && window.__OSORA_GPS_FIX__){
+      this.disabled=true;
+      try{await useOtaLocation();}finally{this.disabled=false;}
     }
-
-    const original='📍現在地';
-    this.dataset.busy='1';
-    this.textContent='📍取得中…';
-    this.disabled=true;
-    try{
-      await useGpsLocation();
-    }finally{
-      this.dataset.busy='0';
-      this.disabled=false;
-      if(locationMode!=='gps') this.textContent=original;
-    }
-  };
+  });
 }
 
 let weatherRefreshBusy=false;
