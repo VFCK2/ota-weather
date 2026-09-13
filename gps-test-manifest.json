@@ -1,9 +1,0 @@
-{
-  "name":"O-SORA GPS TEST",
-  "short_name":"GPS TEST",
-  "start_url":"./gps-test.html",
-  "scope":"./",
-  "display":"standalone",
-  "background_color":"#eef7ff",
-  "theme_color":"#eaf5ff"
-}
