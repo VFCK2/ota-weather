@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eef7ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="O-SORA Push Test">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<title>O-SORA Push Test</title>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="./onesignal.js" defer></script>
+<script>
+function renderStatus(state){
+  const el=document.getElementById('status');
+  if(!el) return;
+  if(!state.ready){
+    el.textContent='OneSignalを読み込み中…';
+    return;
+  }
+  el.innerHTML =
+    '対応: <b>'+ (state.supported?'○':'×') +'</b><br>' +
+    '通知許可: <b>'+ (state.permission?'○ 許可済み':'△ 未許可') +'</b><br>' +
+    '購読: <b>'+ (state.optedIn?'○ 登録済み':'△ 未登録') +'</b>' +
+    (state.id ? '<br>Subscription ID: <code>'+escapeHtml(state.id)+'</code>' : '');
+
+  const btn=document.getElementById('pushBtn');
+  if(state.optedIn){
+    btn.textContent='✅ 通知は有効です';
+    btn.disabled=true;
+  } else if(state.permission){
+    btn.textContent='🔔 通知を登録する';
+    btn.disabled=false;
+  } else {
+    btn.textContent='🔔 通知を有効にする';
+    btn.disabled=false;
+  }
+}
+
+function escapeHtml(value){
+  return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+async function enablePush(){
+  const status=document.getElementById('status');
+  const btn=document.getElementById('pushBtn');
+  try{
+    btn.disabled=true;
+    btn.textContent='通知を設定中…';
+    await window.OSoraOneSignal.requestPermission();
+    await new Promise(r=>setTimeout(r,800));
+    renderStatus(window.OSoraOneSignal.getState());
+  }catch(e){
+    console.error(e);
+    status.textContent='設定エラー: '+(e?.message || e);
+    btn.textContent='🔔 もう一度試す';
+    btn.disabled=false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async function(){
+  window.OSoraOneSignal.subscribe(renderStatus);
+  try{
+    await window.OSoraOneSignal.init();
+    renderStatus(window.OSoraOneSignal.getState());
+  }catch(e){
+    console.error(e);
+    document.getElementById('status').textContent='OneSignal初期化エラー: '+(e?.message || e);
+  }
+});
+</script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;background:#f5faff;color:#17212b}body{padding:env(safe-area-inset-top) 18px env(safe-area-inset-bottom)}
+.wrap{max-width:520px;margin:0 auto;padding:48px 0}.logo{font-weight:800;letter-spacing:.12em;font-size:30px}.sub{margin-top:6px;color:#637386}.card{margin-top:28px;background:#fff;border-radius:22px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.07)}button{width:100%;border:0;border-radius:16px;padding:17px 14px;font-size:17px;font-weight:700;background:#17212b;color:#fff;cursor:pointer}button:disabled{opacity:.55}.status{margin-top:18px;line-height:1.9;background:#f2f6fa;border-radius:14px;padding:15px;font-size:14px}.note{margin-top:18px;font-size:13px;line-height:1.7;color:#637386}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">O-SORA</div>
+  <div class="sub">Web Push テスト</div>
+  <div class="card">
+    <button id="pushBtn" onclick="enablePush()">🔔 通知を有効にする</button>
+    <div id="status" class="status">OneSignalを読み込み中…</div>
+    <div class="note">これは通知機能だけを確認するテストページです。大田区の天気や既存のO-SORA本体には接続していません。</div>
+  </div>
+</div>
+</body>
+</html>
