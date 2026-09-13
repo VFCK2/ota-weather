@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA V2.0</title>
+<title>O-SORA V2.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2648,8 +2648,8 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 <script>
 const GAS_URL="https://script.google.com/macros/s/AKfycbxNgg7izI18Yxk36hyzfGe8GhVUlQvXKCbkKSIcMRtKUEwsjTvZcFUNxoqqLQFLoJJMng/exec";
 const OSORA_GAS_URL_FOR_BRIDGE=GAS_URL;
-const BASE_LAT=35.5613, BASE_LON=139.7161;
-const ACTIVE_LAT=BASE_LAT, ACTIVE_LON=BASE_LON;
+const OTA_LAT=35.5613, OTA_LON=139.7161;
+const ACTIVE_LAT=OTA_LAT, ACTIVE_LON=OTA_LON;
 const locationLabel='大田区';
 let locationMarker=null;
 let forecast=null, frames=[], map, rainLayer, timer=null;
@@ -2835,8 +2835,13 @@ async function refreshWeather(reason='auto'){
   if(weatherRefreshBusy)return;
   weatherRefreshBusy=true;
   try{
+    // 自動更新時は12時間予報も必ず再取得する。
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
     await load();
     lastWeatherRefreshAt=Date.now();
+    // 学習状況も同じタイミングで更新するが、GAS通信を直列化する。
+    await loadLearningState();
   }catch(e){
     console.warn('自動天気更新失敗:',e);
   }finally{
@@ -2871,7 +2876,7 @@ function normalizeLocationForecast(d){
 
 async function fetchOtaFallbackForecast(){
   const url='https://api.open-meteo.com/v1/forecast'
-    +'?latitude='+BASE_LAT+'&longitude='+BASE_LON
+    +'?latitude='+OTA_LAT+'&longitude='+OTA_LON
     +'&current=temperature_2m,precipitation,weather_code,wind_speed_10m'
     +'&hourly=precipitation_probability,precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'
     +'&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max'
@@ -2884,6 +2889,10 @@ async function fetchOtaFallbackForecast(){
 }
 
 async function load(){
+  // load() は「天気本体」だけでなく12時間予報も更新する入口。
+  // 同じページを開いたまま時刻が進んでも古い12時間予報を使い続けない。
+  hourlyForecastLoadedV92=false;
+  hourlyForecastLoadingV92=false;
   $('status').textContent='GASから予報スナップショットを取得中…';
   $('updated').textContent='GAS接続中…';
   try{
@@ -3539,8 +3548,8 @@ $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textC
 
 setLocationLabels();
 setupMap();
+// GAS通信が競合しないよう、起動時も天気→学習の順に直列実行。
 refreshWeather('startup');
-loadLearningState();
 
 // 天気は10分ごとに自動更新。雨雲レーダーは5分ごとに更新。
 setInterval(()=>{
