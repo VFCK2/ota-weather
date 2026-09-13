@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA v1.0</title>
+<title>O-SORA v12.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2955,6 +2955,22 @@ $('locationBtn').onclick=()=>{
   }
 };
 
+let weatherRefreshBusy=false;
+let lastWeatherRefreshAt=0;
+
+async function refreshWeather(reason='auto'){
+  if(weatherRefreshBusy)return;
+  weatherRefreshBusy=true;
+  try{
+    await load();
+    lastWeatherRefreshAt=Date.now();
+  }catch(e){
+    console.warn('自動天気更新失敗:',e);
+  }finally{
+    weatherRefreshBusy=false;
+  }
+}
+
 async function load(){
   if(locationMode==='gps'){
     $('status').textContent='現在地の予報を取得中…';
@@ -3602,8 +3618,26 @@ $('latest').onclick=()=>{const i=findLatestFrameIndex();$('slider').value=i;show
 $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}let i=0;$('play').textContent='⏸ 停止';$('slider').value=i;showFrame(i);timer=setInterval(()=>{i++;if(i>=frames.length){clearInterval(timer);timer=null;$('play').textContent='▶ 再生';return}$('slider').value=i;showFrame(i)},650)};
 
 
-setLocationLabels(); setupMap(); load().then(()=>loadLearningState());
-setInterval(()=>{ if(!timer) loadFrames(); }, 5*60*1000);
+setLocationLabels();
+setupMap();
+refreshWeather('startup').then(()=>loadLearningState());
+
+// 天気は10分ごとに自動更新。雨雲レーダーは5分ごとに更新。
+setInterval(()=>{
+  if(!timer) loadFrames();
+}, 5*60*1000);
+setInterval(()=>{
+  if(document.visibilityState==='visible') refreshWeather('interval');
+}, 10*60*1000);
+
+// ホーム画面へ戻ってきたときも最新天気を取得。
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    const stale=Date.now()-lastWeatherRefreshAt>2*60*1000;
+    if(stale) refreshWeather('resume');
+    if(!timer) loadFrames();
+  }
+});
 </script>
 
 <script>
