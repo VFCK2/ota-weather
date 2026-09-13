@@ -1,4 +1,4 @@
-const CACHE = 'o-sora-v13-ota';
+const CACHE = 'o-sora-v14-ota';
 const CORE = ['./', './index.html', './manifest.json', './apple-touch-icon.png'];
 
 self.addEventListener('install', event => {
