@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA V2.4</title>
+<title>O-SORA V2.5</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -1090,13 +1090,6 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
   font-size:12px;
   font-weight:900;
 }
-.hfDateV9{
-  display:block;
-  font-size:9px;
-  color:#7d8ea0;
-  line-height:1;
-  margin-bottom:1px;
-}
 .hfWxV9{
   font-size:28px;
   line-height:1;
@@ -1173,7 +1166,6 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
     font-size:10px;
   }
   .hfTimeV9{font-size:11px}
-  .hfDateV9{font-size:8px}
   .hfWxV9{font-size:25px}
   .hfTempV9{font-size:14px;padding-top:7px}
   .hfRainV9{font-size:10px}
@@ -2566,7 +2558,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
 
   <div class="hero">
     <section class="card now">
-      <div class="topCardHead"><div class="kicker">CURRENT WEATHER</div><div class="topCardPlace">大田区</div></div>
+      <div class="topCardHead"><div class="kicker">CURRENT WEATHER</div></div>
       <div class="topMain">
         <div class="topIcon" id="icon"></div>
         <div class="topWeatherText">
@@ -2586,7 +2578,7 @@ button.primary{border:0;background:var(--blue);color:white;border-radius:11px;pa
           <div class="kicker">TODAY FORECAST</div>
           <div class="topCardDate" id="todayLabel" aria-hidden="true"></div>
         </div>
-        <div class="topCardPlace">大田区</div>
+        
       </div>
       <div class="topMain">
         <div class="topIcon" id="todayIcon"></div>
@@ -2809,7 +2801,7 @@ function getTodayDaily(daily){
 
 
 function setLocationLabels(){
-  document.querySelectorAll('.topCardPlace').forEach(el=>{ el.textContent='大田区'; });
+  document.querySelectorAll('.topCardPlace').forEach(el=>{ el.textContent=''; });
   const title=$('mapAreaTitle');
   if(title) title.textContent='大田区周辺の雨雲';
 }
@@ -2964,9 +2956,7 @@ function renderHourlyCards(hourly){
 
   let html='<div class="hfLabelV9">時刻</div>';
   future.forEach(x=>{
-    const dt=new Date(x.time);
-    const isNew=dt.getHours()===0;
-    html+=`<div class="hfCellV9 hfTimeV9"><span>${isNew?'<span class="hfDateV9">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span>':''}${timeHM(x.time)}</span></div>`;
+    html+=`<div class="hfCellV9 hfTimeV9"><span>${timeHM(x.time)}</span></div>`;
   });
 
   html+='<div class="hfLabelV9">天気</div>';
@@ -3194,9 +3184,7 @@ function renderHourlyCards(hourly){
 
   let html='<div class="hfLabelV9">時刻</div>';
   future.forEach(x=>{
-    const dt=new Date(x.time);
-    const isNew=dt.getHours()===0;
-    html+=`<div class="hfCellV9 hfTimeV9"><span>${isNew?'<span class="hfDateV9">'+(dt.getMonth()+1)+'/'+dt.getDate()+'</span>':''}${timeHM(x.time)}</span></div>`;
+    html+=`<div class="hfCellV9 hfTimeV9"><span>${timeHM(x.time)}</span></div>`;
   });
 
   html+='<div class="hfLabelV9">天気</div>';
