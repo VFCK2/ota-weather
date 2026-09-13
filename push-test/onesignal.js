@@ -10,6 +10,7 @@
 
   let sdk = null;
   let initialized = false;
+  let initPromise = null;
   const listeners = new Set();
 
   function emit() {
@@ -36,8 +37,9 @@
 
   async function init() {
     if (initialized && sdk) return sdk;
+    if (initPromise) return initPromise;
 
-    await new Promise((resolve, reject) => {
+    initPromise = new Promise((resolve, reject) => {
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
@@ -64,7 +66,11 @@
       });
     });
 
-    return sdk;
+    try {
+      return await initPromise;
+    } finally {
+      initPromise = null;
+    }
   }
 
   function subscribe(fn) {
