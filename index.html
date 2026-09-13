@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA v1.2</title>
+<title>O-SORA v12.1</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2812,8 +2812,19 @@ function getGAS(action='latest', timeout=15000) {
 }
 
 async function getGASForecast(){
-  const d=await getGAS('forecast');
-  return normalizeGAS(d);
+  let lastError=null;
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const d=await getGAS('forecast',attempt===0?15000:20000);
+      const normalized=normalizeGAS(d);
+      if(!normalized || !normalized.current || !normalized.daily) throw new Error('GAS予報データが不正です');
+      return normalized;
+    }catch(e){
+      lastError=e;
+      if(attempt===0) await new Promise(r=>setTimeout(r,1200));
+    }
+  }
+  throw lastError||new Error('GAS予報取得失敗');
 }
 
 
@@ -2893,40 +2904,62 @@ async function refreshMapLocation(){
 }
 
 async function useGpsLocation(){
+  const status=$('status');
+  const btn=$('locationBtn');
   if(!navigator.geolocation){
-    $('status').textContent='この端末では位置情報を利用できません';
-    return;
+    if(status) status.textContent='この端末では位置情報を利用できません';
+    return false;
   }
-  $('status').textContent='現在地を取得中…';
-  navigator.geolocation.getCurrentPosition(async pos=>{
+
+  if(status) status.textContent='現在地を取得中…';
+
+  const getPosition=(options)=>new Promise((resolve,reject)=>{
+    navigator.geolocation.getCurrentPosition(resolve,reject,options);
+  });
+
+  try{
+    // iPhoneのPWAではキャッシュ位置を使わず、まず現在値を要求する。
+    let pos;
     try{
-      ACTIVE_LAT=Number(pos.coords.latitude);
-      ACTIVE_LON=Number(pos.coords.longitude);
-      if(!Number.isFinite(ACTIVE_LAT)||!Number.isFinite(ACTIVE_LON)) throw new Error('位置情報が不正です');
-
-      locationMode='gps';
-      locationLabel='現在地';
-      setLocationLabels();
-
-      // 予報表示は現在地へ切り替える。学習データは大田区側を使い続ける。
-      forecast=normalizeLocationForecast(await fetchLocationForecast());
-      hourlyForecastLoadedV92=false;
-      hourlyForecastLoadingV92=false;
-      render();
-      await ensureSevenDayForecast(forecast.daily||[]);
-      await ensure12HourForecast();
-      await refreshMapLocation();
-
-      $('status').textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
-      $('updated').textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-    }catch(e){
-      console.error('GPS weather error',e);
-      $('status').textContent='現在地の天気取得失敗：'+(e.message||e);
+      pos=await getPosition({enableHighAccuracy:false,timeout:12000,maximumAge:0});
+    }catch(firstError){
+      // 端末によってはGPS取得が遅いため、低精度＋短時間の再試行を行う。
+      if(firstError && firstError.code===1) throw firstError;
+      pos=await getPosition({enableHighAccuracy:false,timeout:20000,maximumAge:60000});
     }
-  }, err=>{
-    const msg=err.code===1?'位置情報の利用が許可されていません':err.code===2?'現在地を取得できませんでした':'位置情報の取得がタイムアウトしました';
-    $('status').textContent=msg+' / 大田区表示を継続';
-  }, {enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+
+    ACTIVE_LAT=Number(pos.coords.latitude);
+    ACTIVE_LON=Number(pos.coords.longitude);
+    if(!Number.isFinite(ACTIVE_LAT)||!Number.isFinite(ACTIVE_LON)) throw new Error('位置情報が不正です');
+
+    locationMode='gps';
+    locationLabel='現在地';
+    setLocationLabels();
+    if(status) status.textContent='現在地の天気を取得中…';
+
+    forecast=normalizeLocationForecast(await fetchLocationForecast());
+    hourlyForecastLoadedV92=false;
+    hourlyForecastLoadingV92=false;
+    render();
+
+    // 重い補助処理は画面表示後に実行する。
+    ensureSevenDayForecast(forecast.daily||[]).catch(e=>console.warn('7日予報更新:',e));
+    ensure12HourForecast().catch(e=>console.warn('12時間予報更新:',e));
+    refreshMapLocation().catch(e=>console.warn('地図更新:',e));
+
+    if(status) status.textContent='● 現在地の天気を表示中 / 学習は大田区のデータを使用';
+    $('updated').textContent='現在地 更新 '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+    return true;
+  }catch(e){
+    console.error('GPS error',e);
+    let msg='現在地を取得できませんでした';
+    if(e && e.code===1) msg='位置情報が許可されていません。iPhoneの「設定 → プライバシーとセキュリティ → 位置情報サービス」でO-SORAを確認してください';
+    else if(e && e.code===2) msg='現在地を取得できませんでした。位置情報サービスを確認してください';
+    else if(e && e.code===3) msg='現在地の取得がタイムアウトしました。もう一度押してください';
+    if(status) status.textContent=msg;
+    if(btn) btn.textContent='📍現在地';
+    return false;
+  }
 }
 
 async function useOtaLocation(){
@@ -2939,21 +2972,39 @@ async function useOtaLocation(){
     hourlyForecastLoadedV92=false;
     hourlyForecastLoadingV92=false;
     await load();
-    await ensureSevenDayForecast(forecast?.daily||[]);
-    await ensure12HourForecast();
-    await refreshMapLocation();
+    ensureSevenDayForecast(forecast?.daily||[]).catch(e=>console.warn('7日予報更新:',e));
+    ensure12HourForecast().catch(e=>console.warn('12時間予報更新:',e));
+    refreshMapLocation().catch(e=>console.warn('地図更新:',e));
   }catch(e){
     console.error('Ota location restore error',e);
   }
 }
 
-$('locationBtn').onclick=()=>{
-  if(locationMode==='gps'){
-    useOtaLocation();
-  }else{
-    useGpsLocation();
-  }
-};
+// 現在地ボタン。PWA/iPhoneでは直接ユーザー操作からGeolocationを呼び出す。
+const locationButton=$('locationBtn');
+if(locationButton){
+  locationButton.onclick=async function(){
+    if(this.dataset.busy==='1') return;
+    if(locationMode==='gps'){
+      this.dataset.busy='1';
+      try{ await useOtaLocation(); }
+      finally{ this.dataset.busy='0'; }
+      return;
+    }
+
+    const original='📍現在地';
+    this.dataset.busy='1';
+    this.textContent='📍取得中…';
+    this.disabled=true;
+    try{
+      await useGpsLocation();
+    }finally{
+      this.dataset.busy='0';
+      this.disabled=false;
+      if(locationMode!=='gps') this.textContent=original;
+    }
+  };
+}
 
 let weatherRefreshBusy=false;
 let lastWeatherRefreshAt=0;
@@ -2993,16 +3044,26 @@ async function load(){
   $('updated').textContent='GAS接続中…';
   try{
     forecast=await getGASForecast();
+    // まずメイン画面を即表示。重い補助処理はバックグラウンドで行う。
     render();
-    await ensureSevenDayForecast(forecast.daily||[]);
-    await ensure12HourForecast();
-    $('status').textContent='● GAS接続成功 / JMAナウキャスト＋通常予報を表示中 / 学習補正を時間予報に適用';
+    $('status').textContent='● GAS接続成功 / 天気を表示中…';
+    Promise.all([
+      ensureSevenDayForecast(forecast.daily||[]),
+      ensure12HourForecast()
+    ]).then(()=>{
+      if(locationMode==='ota') $('status').textContent='● GAS接続成功 / JMAナウキャスト＋通常予報を表示中 / 学習補正を時間予報に適用';
+    }).catch(e=>console.warn('補助予報更新:',e));
   }catch(e){
     console.error('GAS取得失敗',e);
+    if(forecast){
+      $('status').textContent='GAS更新に失敗しました。前回の天気を表示中';
+      return false;
+    }
     $('status').textContent='GAS接続失敗：'+(e.message||e);
     $('updated').textContent='GAS取得エラー';
-    return;
+    return false;
   }
+  return true;
 }
 
 function renderHourlyCards(hourly){
@@ -3620,7 +3681,8 @@ $('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textC
 
 setLocationLabels();
 setupMap();
-refreshWeather('startup').then(()=>loadLearningState());
+refreshWeather('startup');
+loadLearningState();
 
 // 天気は10分ごとに自動更新。雨雲レーダーは5分ごとに更新。
 setInterval(()=>{

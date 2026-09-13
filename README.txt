@@ -1,18 +1,8 @@
-# O-SORA PWA
+O-SORA PWA
 
-GitHub Pagesのルートに以下を配置してください。
-
-O-SORA/
-├─ index.html
-├─ manifest.json
-├─ sw.js
-├─ apple-touch-icon.png
-├─ o-sora-icon-192.png
-├─ o-sora-icon-512.png
-└─ icons/
-   └─ 既存のクレイ調天気アイコン24個
-
-iPhone:
-Safariでページを開く → 共有 → ホーム画面に追加
-
-ホーム画面から起動すると、O-SORAがアプリ風のstandalone表示になります。
+修正版 v1-2
+- iPhoneホーム画面版の現在地取得を安定化
+- GAS予報取得を最大2回まで自動リトライ
+- GAS一時失敗時は前回の正常な天気を維持
+- 天気自動更新10分、雨雲レーダー5分
+- PWAキャッシュをv1-2へ更新
