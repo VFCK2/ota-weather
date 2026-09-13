@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>O-SORA v1.8</title>
+<title>O-SORA v1.9</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -2592,7 +2592,9 @@ window.osoraLocationTap=function(btn){
   try{
     if(window.__OSORA_LOCATION_BUSY__) return false;
     window.__OSORA_LOCATION_BUSY__=true;
+    window.__OSORA_GPS_PENDING__=true;
     if(btn && btn.dataset.mode==='gps'){
+      window.__OSORA_GPS_PENDING__=false;
       if(typeof window.osoraRestoreOta==='function') window.osoraRestoreOta();
       else window.__OSORA_LOCATION_BUSY__=false;
       return false;
@@ -2600,59 +2602,67 @@ window.osoraLocationTap=function(btn){
     if(btn){btn.disabled=false;btn.textContent='📍取得中…';btn.dataset.mode='gps-pending';}
     var status=document.getElementById('status');
     if(status) status.textContent='現在地を取得中…';
-    if(!navigator.geolocation){
-      if(status)status.textContent='この端末では位置情報を利用できません';
+    if(!window.isSecureContext){
+      if(status)status.textContent='位置情報にはHTTPS接続が必要です';
+      window.__OSORA_GPS_PENDING__=false;
       if(btn){btn.textContent='📍現在地';btn.dataset.mode='ota';}
       window.__OSORA_LOCATION_BUSY__=false;
       return false;
     }
-
-    var done=false, watchId=null;
-    var finish=function(){
-      if(watchId!==null){try{navigator.geolocation.clearWatch(watchId);}catch(e){}}
-      watchId=null;
-    };
-    var fail=function(msg){
-      if(done)return; done=true; finish();
-      if(status)status.textContent=msg;
+    if(!navigator.geolocation){
+      if(status)status.textContent='この端末では位置情報を利用できません';
+      window.__OSORA_GPS_PENDING__=false;
+      if(btn){btn.textContent='📍現在地';btn.dataset.mode='ota';}
+      window.__OSORA_LOCATION_BUSY__=false;
+      return false;
+    }
+    var done=false, watchId=null, fallbackStarted=false;
+    var finish=function(){ if(watchId!==null){try{navigator.geolocation.clearWatch(watchId);}catch(e){}} watchId=null; };
+    var fail=function(msg,code){
+      if(done)return; done=true; finish(); window.__OSORA_GPS_PENDING__=false;
+      if(status)status.textContent=msg+(code?' ['+code+']':'');
       if(btn){btn.disabled=false;btn.textContent='📍現在地';btn.dataset.mode='ota';}
       window.__OSORA_LOCATION_BUSY__=false;
     };
     var success=function(pos){
-      if(done)return; done=true; finish();
+      if(done)return; done=true; finish(); window.__OSORA_GPS_PENDING__=false;
       var lat=Number(pos.coords.latitude), lon=Number(pos.coords.longitude);
-      if(!Number.isFinite(lat)||!Number.isFinite(lon)){ fail('現在地を取得できませんでした'); return; }
+      if(!Number.isFinite(lat)||!Number.isFinite(lon)){fail('現在地を取得できませんでした');return;}
       if(status)status.textContent='現在地を取得しました。天気を更新中…';
       if(typeof window.osoraApplyGpsFix==='function') window.osoraApplyGpsFix(lat,lon,Number(pos.coords.accuracy||0));
       else if(typeof window.applyOsoraGpsFix==='function') window.applyOsoraGpsFix({lat:lat,lon:lon,accuracy:Number(pos.coords.accuracy||0),at:Date.now()});
       else fail('GPS処理を初期化できませんでした');
     };
-
-    // Home Screen Web Apps on iOS have a separate standalone context from Safari.
-    // Use watchPosition there because it can obtain the first fix through the active
-    // location stream even when getCurrentPosition does not complete promptly.
-    var standalone=!!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
-    var options={enableHighAccuracy:false,timeout:15000,maximumAge:30000};
-    if(standalone){
-      watchId=navigator.geolocation.watchPosition(success, function(err){
-        if(err&&err.code===1) fail('位置情報が許可されていません（iPhoneの位置情報設定を確認）');
-        else if(err&&err.code===2) fail('現在地を取得できませんでした（位置情報サービスを確認）');
-        else if(err&&err.code===3) fail('現在地の取得がタイムアウトしました');
-        else fail('現在地を取得できませんでした');
-      }, options);
-    }else{
-      navigator.geolocation.getCurrentPosition(success, function(err){
-        if(err&&err.code===1) fail('位置情報が許可されていません（iPhoneの位置情報設定を確認）');
-        else if(err&&err.code===2) fail('現在地を取得できませんでした（位置情報サービスを確認）');
-        else if(err&&err.code===3) fail('現在地の取得がタイムアウトしました');
-        else fail('現在地を取得できませんでした');
-      }, options);
-    }
-    setTimeout(function(){
-      if(!done) fail('現在地の取得がタイムアウトしました（位置情報サービスを確認してください）');
-    },20000);
+    var error=function(err){
+      var code=err&&err.code;
+      if(code===1) fail('位置情報が許可されていません。ホーム画面のO-SORA側の位置情報設定を確認してください','1');
+      else if(code===2 && !fallbackStarted){
+        fallbackStarted=true;
+        if(status)status.textContent='現在地を再取得しています…';
+        try{navigator.geolocation.getCurrentPosition(success,error,{enableHighAccuracy:false,timeout:12000,maximumAge:60000});}
+        catch(e){fail('現在地を取得できませんでした','2');}
+      }else if(code===3 && !fallbackStarted){
+        fallbackStarted=true;
+        if(status)status.textContent='現在地を再取得しています…';
+        try{navigator.geolocation.getCurrentPosition(success,error,{enableHighAccuracy:false,timeout:12000,maximumAge:60000});}
+        catch(e){fail('現在地を取得できませんでした','3');}
+      }else fail('現在地を取得できませんでした。位置情報サービスを確認してください',String(code||'unknown'));
+    };
+    // First try getCurrentPosition in both Safari and Home Screen Web App.
+    // If the standalone app does not return a fix, fall back to watchPosition.
+    try{
+      navigator.geolocation.getCurrentPosition(success,function(err){
+        if(err&&err.code===1){ error(err); return; }
+        if(status)status.textContent='位置情報を再取得しています…';
+        try{
+          watchId=navigator.geolocation.watchPosition(success,error,{enableHighAccuracy:false,timeout:15000,maximumAge:30000});
+        }catch(e){ error(err); }
+      },{enableHighAccuracy:false,timeout:10000,maximumAge:30000});
+    }catch(e){ fail('位置情報APIの開始に失敗しました'); }
+    setTimeout(function(){ if(!done) fail('現在地の取得がタイムアウトしました。iPhoneの位置情報設定を確認してください'); },22000);
   }catch(e){
     console.error('O-SORA location tap error',e);
+    window.__OSORA_GPS_PENDING__=false;
     var b=document.getElementById('locationBtn'), st=document.getElementById('status');
     if(st)st.textContent='現在地ボタンでエラーが発生しました';
     if(b){b.disabled=false;b.textContent='📍現在地';b.dataset.mode='ota';}
@@ -2971,7 +2981,7 @@ function setLocationLabels(){
   const title=$('mapAreaTitle');
   if(title) title.textContent=locationLabel+'周辺の雨雲';
   const btn=$('locationBtn');
-  if(btn){
+  if(btn && !window.__OSORA_GPS_PENDING__){
     const isGps=locationMode==='gps';
     btn.dataset.mode=isGps?'gps':'ota';
     btn.textContent=isGps?'📍現在地中':'📍現在地';
